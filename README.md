@@ -7,24 +7,31 @@ Monorepo dla MVP aplikacji do nauki slowek:
 
 ## Wymagania
 
-- Node.js `22 LTS`
-- `pnpm` (uruchamiany przez `npx pnpm@10`)
+- Node.js `22.23.1` (patrz `.nvmrc`)
+- `pnpm` globalnie (`pnpm -v` powinno zwrocic `10.x`)
 
 ## Szybki start lokalnie
 
 1. Zainstaluj zaleznosci:
-   - `npx -y pnpm@10 --dir backend install`
-   - `npx -y pnpm@10 --dir frontend install`
+   - `pnpm --dir backend install`
+   - `pnpm --dir frontend install`
 2. Uruchom backend:
-   - `npx -y pnpm@10 --dir backend run start:dev`
+   - `pnpm --dir backend run start:dev`
 3. Uruchom frontend:
-   - `npx -y pnpm@10 --dir frontend run start`
+   - `pnpm --dir frontend run start`
 
-## Znany problem na Windows (Corepack)
+## Uwaga o Corepack
 
-Przy komendzie `corepack pnpm ...` moze pojawic sie blad:
-`ERR_VM_DYNAMIC_IMPORT_CALLBACK_MISSING`.
-W takim przypadku uzyj komend z `npx pnpm@10` powyzej.
+W tym projekcie uzywaj globalnego `pnpm 10.x`.
+`corepack pnpm` moze uruchomic `pnpm 11`, co wprowadza dodatkowe polityki
+bezpieczenstwa lockfile i moze blokowac instalacje w lokalnym dev.
+
+## Komendy zbiorcze (root)
+
+Z poziomu katalogu glownego projektu:
+- `pnpm run lint:all`
+- `pnpm run test:all`
+- `pnpm run build:all`
 
 ## Struktura katalogow
 

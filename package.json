@@ -1,0 +1,9 @@
+{
+  "name": "fiszki",
+  "private": true,
+  "scripts": {
+    "lint:all": "pnpm --dir backend run lint && pnpm --dir frontend run lint",
+    "test:all": "pnpm --dir backend run test && pnpm --dir frontend run test",
+    "build:all": "pnpm --dir backend run build && pnpm --dir frontend run build"
+  }
+}

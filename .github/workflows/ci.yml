@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: ${{ matrix.app }} checks
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - app: backend
+            lockfile: backend/pnpm-lock.yaml
+          - app: frontend
+            lockfile: frontend/pnpm-lock.yaml
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: ${{ matrix.lockfile }}
+
+      - name: Install dependencies
+        run: pnpm --dir ${{ matrix.app }} install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm --dir ${{ matrix.app }} run lint
+
+      - name: Test
+        run: pnpm --dir ${{ matrix.app }} run test
+
+      - name: Build
+        run: pnpm --dir ${{ matrix.app }} run build
