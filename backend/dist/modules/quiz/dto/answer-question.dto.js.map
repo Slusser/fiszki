@@ -1,0 +1,1 @@
+{"version":3,"file":"answer-question.dto.js","sourceRoot":"","sources":["../../../../src/modules/quiz/dto/answer-question.dto.ts"],"names":[],"mappings":";;;;;;;;;;;;AAAA,qDAAuD;AAEvD,MAAa,iBAAiB;IAG5B,aAAa,CAAU;IAIvB,cAAc,CAAU;CACzB;AARD,8CAQC;AALC;IAFC,IAAA,0BAAQ,GAAE;IACV,IAAA,4BAAU,GAAE;;wDACU;AAIvB;IAFC,IAAA,0BAAQ,GAAE;IACV,IAAA,4BAAU,GAAE;;yDACW"}
