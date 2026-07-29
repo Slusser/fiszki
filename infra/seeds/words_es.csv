@@ -1,0 +1,13 @@
+category_slug,tier,source_word,target_word
+jedzenie,easy,water,agua
+jedzenie,easy,bread,pan
+jedzenie,hard,strawberry,fresa
+jedzenie,hard,cauliflower,coliflor
+jedzenie,expert,whisk,batidor
+jedzenie,expert,skillet,sarten
+podroze,easy,train,tren
+podroze,easy,ticket,billete
+podroze,hard,luggage,equipaje
+podroze,hard,platform,anden
+podroze,expert,itinerary,itinerario
+podroze,expert,roundabout,rotonda
