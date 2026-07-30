@@ -16,16 +16,13 @@ Backend URL: `https://fiszki-xv3u.onrender.com`
 - PASS - w bundle frontendu jest URL backendu `https://fiszki-xv3u.onrender.com`.
 - PASS - placeholder `https://api-dev.example.com` nie wystepuje w live bundle.
 
-## 3) Uwaga krytyczna (CORS)
+## 3) CORS (frontend -> backend)
 
-- FAIL (na aktualnie wdrozonym backendzie) - preflight `OPTIONS` na `/v1/me` z origin Netlify zwraca `404`, brak naglowkow CORS.
-- Dzialanie naprawcze wykonane lokalnie:
-  - backend `main.ts` zostal rozszerzony o `app.enableCors(...)`,
-  - domyslne originy: `http://localhost:4200` i `https://iridescent-gecko-d55c93.netlify.app`,
-  - opcja runtime: `FRONTEND_ORIGINS` (lista CSV).
-- Wymagany krok operacyjny: redeploy backendu na Render z tym kodem.
+- PASS - preflight `OPTIONS /v1/me` z origin Netlify zwraca `204`.
+- PASS - backend zwraca `access-control-allow-origin: https://iridescent-gecko-d55c93.netlify.app`.
+- PASS - backend zwraca oczekiwane metody i naglowki CORS (`GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS`, `Content-Type,Authorization`).
+- INFO - CORS jest konfigurowany przez `app.enableCors(...)` w `backend/src/main.ts` z opcja `FRONTEND_ORIGINS` (CSV).
 
 ## Decyzja
 
-- **Krok 3: WARUNKOWO ZALICZONY** (frontend poprawnie wdrozony),
-- **Smoke E2E z przegladarki zablokowany do czasu redeployu backendu z CORS fixem**.
+- **Krok 3: ZALICZONY**.

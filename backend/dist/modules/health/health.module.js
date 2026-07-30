@@ -12,18 +12,46 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.HealthModule = exports.HealthController = exports.HealthService = exports.HealthRepository = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
+const database_service_1 = require("../../common/database/database.service");
 let HealthRepository = class HealthRepository {
-    getChecks() {
+    databaseService;
+    constructor(databaseService) {
+        this.databaseService = databaseService;
+    }
+    async getChecks() {
+        const hasSupabaseAuthConfig = Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY);
+        const hasDatabaseConfig = Boolean(process.env.SUPABASE_DB_URL ?? process.env.DATABASE_URL);
+        let databaseStatus = 'not_configured';
+        const details = {};
+        if (hasDatabaseConfig) {
+            try {
+                await this.databaseService.query('select 1 as ok');
+                databaseStatus = 'ok';
+            }
+            catch (error) {
+                databaseStatus = 'error';
+                details.database =
+                    error instanceof Error ? error.message : 'Database ping failed';
+            }
+        }
+        const supabaseStatus = hasSupabaseAuthConfig ? 'ok' : 'not_configured';
+        const status = databaseStatus === 'error' ? 'degraded' : 'ready';
         return {
-            app: 'ok',
-            database: 'unknown',
-            supabase: 'not_configured',
+            status,
+            checks: {
+                app: 'ok',
+                database: databaseStatus,
+                supabase: supabaseStatus,
+            },
+            ...(details.database ? { details } : {}),
+            timestamp: new Date().toISOString(),
         };
     }
 };
 exports.HealthRepository = HealthRepository;
 exports.HealthRepository = HealthRepository = __decorate([
-    (0, common_1.Injectable)()
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [database_service_1.DatabaseService])
 ], HealthRepository);
 let HealthService = class HealthService {
     healthRepository;
@@ -38,11 +66,7 @@ let HealthService = class HealthService {
         };
     }
     getReadiness() {
-        return {
-            status: 'ready',
-            checks: this.healthRepository.getChecks(),
-            timestamp: new Date().toISOString(),
-        };
+        return this.healthRepository.getChecks();
     }
 };
 exports.HealthService = HealthService;
@@ -77,7 +101,7 @@ __decorate([
     (0, swagger_1.ApiOkResponse)({ description: 'Service is ready to serve traffic' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Object)
+    __metadata("design:returntype", Promise)
 ], HealthController.prototype, "getReadiness", null);
 exports.HealthController = HealthController = __decorate([
     (0, common_1.Controller)('health'),
