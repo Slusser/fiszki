@@ -14,7 +14,9 @@ interface UserProfileWalletRow {
 export class UsersRepository {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async getProfileAndWallet(userId: string): Promise<Omit<MeResponseDto, 'email'>> {
+  async getProfileAndWallet(
+    userId: string,
+  ): Promise<Omit<MeResponseDto, 'email'>> {
     const result = await this.databaseService.query<UserProfileWalletRow>(
       `
         select

@@ -30,7 +30,9 @@ let ProgressionController = class ProgressionController {
 exports.ProgressionController = ProgressionController;
 __decorate([
     (0, common_1.Get)('overview'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get user progression overview across categories and tiers' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Get user progression overview across categories and tiers',
+    }),
     (0, swagger_1.ApiOkResponse)({ description: 'Progress overview returned' }),
     (0, swagger_1.ApiUnauthorizedResponse)({ description: 'Missing or invalid bearer token' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

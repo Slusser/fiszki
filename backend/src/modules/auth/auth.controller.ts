@@ -19,7 +19,10 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout (backend auth check endpoint)' })
   @ApiOkResponse({ description: 'User token accepted and logout acknowledged' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid bearer token' })
-  logout(@CurrentUser() user: AuthUserDto): { loggedOut: true; userId: string } {
+  logout(@CurrentUser() user: AuthUserDto): {
+    loggedOut: true;
+    userId: string;
+  } {
     return { loggedOut: true, userId: user.userId };
   }
 }

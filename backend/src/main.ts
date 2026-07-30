@@ -34,6 +34,9 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3000);
   Logger.log(`Backend listening on ${await app.getUrl()}`, 'Bootstrap');
-  Logger.log(`Swagger docs available on ${await app.getUrl()}/docs`, 'Bootstrap');
+  Logger.log(
+    `Swagger docs available on ${await app.getUrl()}/docs`,
+    'Bootstrap',
+  );
 }
 void bootstrap();

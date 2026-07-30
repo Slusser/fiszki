@@ -1,4 +1,5 @@
 import { DatabaseService } from '../../common/database/database.service';
+import { RewardsService } from '../rewards/rewards.service';
 import type { SessionProgressMetaDto } from './dto/next-question-response.dto';
 import type { FinishQuizSessionResponseDto } from './dto/finish-quiz-session-response.dto';
 import type { QuizTier } from './dto/quiz-tier.dto';
@@ -19,7 +20,8 @@ interface WordRow {
 }
 export declare class QuizRepository {
     private readonly databaseService;
-    constructor(databaseService: DatabaseService);
+    private readonly rewardsService;
+    constructor(databaseService: DatabaseService, rewardsService: RewardsService);
     startSession(userId: string, categoryId: string, tier: QuizTier): Promise<StartQuizSessionResponseDto>;
     getSessionOrThrow(sessionId: string, userId: string): Promise<SessionRow>;
     getNextQuestionCandidate(sessionId: string, categoryId: string, tier: QuizTier): Promise<WordRow | null>;
@@ -46,7 +48,6 @@ export declare class QuizRepository {
     private getSessionProgressMetaWithClient;
     private getSessionForFinishWithLock;
     private isTierCompleted;
-    private applyFinishRewards;
     private getWalletSnapshot;
     private buildAlreadyFinishedResponse;
     private getExistingSessionReward;

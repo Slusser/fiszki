@@ -13,7 +13,7 @@
 ## 3) Baza danych i Supabase (2-3 dni)
 - Tabele MVP: użytkownicy, kategorie, słowa, postęp słów, sesje quizu, odpowiedzi, portfel punktów, ledger.
 - RLS policies dla danych użytkownika.
-- Seed statycznych danych: 200 kategorii + słowa i tiery.
+- Seed statycznych danych: 200 kategorii, po 50 słów na kategorię (tiery 10/25/50).
 - Indeksy pod ścieżki quizowe (`user_id`, `tier`, `mastered`, `category_id`).
 
 ## 4) Backend NestJS (4-6 dni)

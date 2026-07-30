@@ -60,7 +60,9 @@ __decorate([
     (0, common_1.Post)('categories/:categoryId/unlock'),
     (0, swagger_1.ApiOperation)({ summary: 'Unlock category by spending points' }),
     (0, swagger_1.ApiOkResponse)({ description: 'Category unlocked or already unlocked' }),
-    (0, swagger_1.ApiBadRequestResponse)({ description: 'Insufficient points or invalid request' }),
+    (0, swagger_1.ApiBadRequestResponse)({
+        description: 'Insufficient points or invalid request',
+    }),
     (0, swagger_1.ApiForbiddenResponse)({ description: 'Category unavailable' }),
     (0, swagger_1.ApiUnauthorizedResponse)({ description: 'Missing or invalid bearer token' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),

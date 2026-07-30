@@ -56,7 +56,7 @@ describe('unlockGuard', () => {
         categoryId: 'cat-1',
         tiers: [
           { tier: 'easy', totalWords: 10, masteredWords: 10 },
-          { tier: 'hard', totalWords: 10, masteredWords: 3 },
+          { tier: 'hard', totalWords: 25, masteredWords: 3 },
         ],
       }),
     );
@@ -96,7 +96,7 @@ describe('unlockGuard', () => {
         categoryId: 'cat-1',
         tiers: [
           { tier: 'easy', totalWords: 10, masteredWords: 3 },
-          { tier: 'hard', totalWords: 10, masteredWords: 0 },
+          { tier: 'hard', totalWords: 25, masteredWords: 0 },
         ],
       }),
     );

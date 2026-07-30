@@ -10,6 +10,7 @@ Zaprojektować i uruchomić warstwę danych MVP na Supabase tak, aby:
 ## 2. Założenia wejściowe
 - Jedno środowisko: `dev`.
 - Tylko język hiszpański w Fazie 1.
+- Wolumen słów: 50 na kategorię, progresja tierów `easy=10`, `hard=25`, `expert=50`.
 - Dystraktory losowane runtime z tego samego tieru.
 - Brak aliasów tłumaczeń.
 - Reguła błędów: `required_correct += 3`, limit kary `max +10`.
@@ -115,5 +116,5 @@ Zaprojektować i uruchomić warstwę danych MVP na Supabase tak, aby:
 - `categories/words`: odczyt dostępny także dla `anon`.
 - `profiles`: tworzone triggerem po insercie do `auth.users`.
 - Schemat danych aplikacyjnych: `public` (MVP).
-- Seed 200 kategorii i komplet słów: ładowany od razu (jednorazowo na start).
+- Seed 200 kategorii i komplet słów (50 na kategorię, tiery 10/25/50): ładowany od razu (jednorazowo na start).
 - W `dev` dopuszczamy pełne czyszczenie i reseed bazy jednym skryptem.

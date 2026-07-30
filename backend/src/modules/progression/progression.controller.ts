@@ -20,10 +20,14 @@ export class ProgressionController {
   constructor(private readonly progressionService: ProgressionService) {}
 
   @Get('overview')
-  @ApiOperation({ summary: 'Get user progression overview across categories and tiers' })
+  @ApiOperation({
+    summary: 'Get user progression overview across categories and tiers',
+  })
   @ApiOkResponse({ description: 'Progress overview returned' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid bearer token' })
-  getOverview(@CurrentUser() user: AuthUserDto): Promise<ProgressOverviewResponseDto> {
+  getOverview(
+    @CurrentUser() user: AuthUserDto,
+  ): Promise<ProgressOverviewResponseDto> {
     return this.progressionService.getOverview(user);
   }
 }

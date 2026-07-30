@@ -71,7 +71,9 @@ __decorate([
     (0, throttler_1.Throttle)({ default: { limit: 60, ttl: 60_000 } }),
     (0, swagger_1.ApiOperation)({ summary: 'Submit answer for current session question' }),
     (0, swagger_1.ApiOkResponse)({ description: 'Answer processed and progression updated' }),
-    (0, swagger_1.ApiBadRequestResponse)({ description: 'Invalid token/timestamp or business rule failure' }),
+    (0, swagger_1.ApiBadRequestResponse)({
+        description: 'Invalid token/timestamp or business rule failure',
+    }),
     (0, swagger_1.ApiUnauthorizedResponse)({ description: 'Missing or invalid bearer token' }),
     (0, swagger_1.ApiTooManyRequestsResponse)({ description: 'Rate limit exceeded' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
@@ -86,7 +88,9 @@ __decorate([
     (0, common_1.Post)('sessions/:sessionId/finish'),
     (0, throttler_1.Throttle)({ default: { limit: 20, ttl: 60_000 } }),
     (0, swagger_1.ApiOperation)({ summary: 'Finish session and calculate rewards' }),
-    (0, swagger_1.ApiOkResponse)({ description: 'Session finished and rewards applied (idempotent)' }),
+    (0, swagger_1.ApiOkResponse)({
+        description: 'Session finished and rewards applied (idempotent)',
+    }),
     (0, swagger_1.ApiBadRequestResponse)({ description: 'Session cannot be finished yet' }),
     (0, swagger_1.ApiUnauthorizedResponse)({ description: 'Missing or invalid bearer token' }),
     (0, swagger_1.ApiTooManyRequestsResponse)({ description: 'Rate limit exceeded' }),

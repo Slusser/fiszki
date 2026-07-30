@@ -10,7 +10,7 @@ describe('canAccessTier', () => {
   it('blokuje hard gdy easy nie jest ukonczony', () => {
     const tiers: CategoryTier[] = [
       { tier: 'easy', totalWords: 10, masteredWords: 9 },
-      { tier: 'hard', totalWords: 10, masteredWords: 0 },
+      { tier: 'hard', totalWords: 25, masteredWords: 0 },
     ];
     expect(canAccessTier('hard', tiers)).toBeFalse();
   });
@@ -18,7 +18,7 @@ describe('canAccessTier', () => {
   it('pozwala na hard gdy easy jest ukonczony', () => {
     const tiers: CategoryTier[] = [
       { tier: 'easy', totalWords: 10, masteredWords: 10 },
-      { tier: 'hard', totalWords: 10, masteredWords: 0 },
+      { tier: 'hard', totalWords: 25, masteredWords: 0 },
     ];
     expect(canAccessTier('hard', tiers)).toBeTrue();
   });
@@ -26,15 +26,15 @@ describe('canAccessTier', () => {
   it('pozwala na expert dopiero po ukonczeniu hard', () => {
     const lockedExpert: CategoryTier[] = [
       { tier: 'easy', totalWords: 10, masteredWords: 10 },
-      { tier: 'hard', totalWords: 10, masteredWords: 9 },
-      { tier: 'expert', totalWords: 10, masteredWords: 0 },
+      { tier: 'hard', totalWords: 25, masteredWords: 24 },
+      { tier: 'expert', totalWords: 50, masteredWords: 0 },
     ];
     expect(canAccessTier('expert', lockedExpert)).toBeFalse();
 
     const unlockedExpert: CategoryTier[] = [
       { tier: 'easy', totalWords: 10, masteredWords: 10 },
-      { tier: 'hard', totalWords: 10, masteredWords: 10 },
-      { tier: 'expert', totalWords: 10, masteredWords: 0 },
+      { tier: 'hard', totalWords: 25, masteredWords: 25 },
+      { tier: 'expert', totalWords: 50, masteredWords: 0 },
     ];
     expect(canAccessTier('expert', unlockedExpert)).toBeTrue();
   });

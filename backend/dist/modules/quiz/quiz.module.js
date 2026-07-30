@@ -9,6 +9,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.QuizModule = void 0;
 const common_1 = require("@nestjs/common");
 const auth_module_1 = require("../auth/auth.module");
+const rewards_module_1 = require("../rewards/rewards.module");
 const quiz_controller_1 = require("./quiz.controller");
 const quiz_question_token_service_1 = require("./quiz-question-token.service");
 const quiz_repository_1 = require("./quiz.repository");
@@ -18,7 +19,7 @@ let QuizModule = class QuizModule {
 exports.QuizModule = QuizModule;
 exports.QuizModule = QuizModule = __decorate([
     (0, common_1.Module)({
-        imports: [auth_module_1.AuthModule],
+        imports: [auth_module_1.AuthModule, rewards_module_1.RewardsModule],
         controllers: [quiz_controller_1.QuizController],
         providers: [quiz_service_1.QuizService, quiz_repository_1.QuizRepository, quiz_question_token_service_1.QuizQuestionTokenService],
         exports: [quiz_service_1.QuizService],

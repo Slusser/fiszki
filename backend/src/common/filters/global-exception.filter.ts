@@ -60,7 +60,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         }`,
       );
     } else {
-      this.logger.warn(`${request.method} ${request.url} -> ${status}: ${message}`);
+      this.logger.warn(
+        `${request.method} ${request.url} -> ${status}: ${message}`,
+      );
     }
 
     const payload: ApiErrorResponseDto = {
