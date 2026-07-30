@@ -50,12 +50,13 @@ export class QuizService {
     );
     const progress = await this.quizRepository.getSessionProgressMeta(
       session.id,
+      user.userId,
       session.category_id,
       session.tier,
     );
 
     const candidate = await this.quizRepository.getNextQuestionCandidate(
-      session.id,
+      user.userId,
       session.category_id,
       session.tier,
     );

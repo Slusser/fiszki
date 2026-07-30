@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject } from '@angular/core';
+import { Component, computed, effect, inject, untracked } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { QuizSessionStore } from '../../../core/quiz/quiz-session.store';
@@ -98,7 +98,10 @@ export class SessionSummaryPageComponent {
         return;
       }
 
-      void this.store.loadSummaryForSession(sessionId);
+      // Prevent effect from tracking store signals read inside loadSummaryForSession().
+      untracked(() => {
+        void this.store.loadSummaryForSession(sessionId);
+      });
     });
   }
 
