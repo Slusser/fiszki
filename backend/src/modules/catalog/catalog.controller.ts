@@ -28,7 +28,9 @@ export class CatalogController {
   @ApiOperation({ summary: 'List available categories and unlock status' })
   @ApiOkResponse({ description: 'Categories fetched for current user' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid bearer token' })
-  getCategories(@CurrentUser() user: AuthUserDto): Promise<CategoriesResponseDto> {
+  getCategories(
+    @CurrentUser() user: AuthUserDto,
+  ): Promise<CategoriesResponseDto> {
     return this.catalogService.getCategories(user);
   }
 
@@ -46,7 +48,9 @@ export class CatalogController {
   @Post('categories/:categoryId/unlock')
   @ApiOperation({ summary: 'Unlock category by spending points' })
   @ApiOkResponse({ description: 'Category unlocked or already unlocked' })
-  @ApiBadRequestResponse({ description: 'Insufficient points or invalid request' })
+  @ApiBadRequestResponse({
+    description: 'Insufficient points or invalid request',
+  })
   @ApiForbiddenResponse({ description: 'Category unavailable' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid bearer token' })
   unlockCategory(

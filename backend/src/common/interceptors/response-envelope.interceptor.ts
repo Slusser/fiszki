@@ -10,9 +10,10 @@ import { ApiSuccessResponseDto } from '../dto/response-envelope.dto';
 type MaybeEnvelope<T> = T | ApiSuccessResponseDto<T>;
 
 @Injectable()
-export class ResponseEnvelopeInterceptor<T>
-  implements NestInterceptor<T, ApiSuccessResponseDto<T>>
-{
+export class ResponseEnvelopeInterceptor<T> implements NestInterceptor<
+  T,
+  ApiSuccessResponseDto<T>
+> {
   intercept(
     _context: ExecutionContext,
     next: CallHandler,
@@ -26,7 +27,7 @@ export class ResponseEnvelopeInterceptor<T>
           data.success === true &&
           'data' in data
         ) {
-          return data as ApiSuccessResponseDto<T>;
+          return data;
         }
 
         return { success: true, data: data as T };

@@ -3,41 +3,44 @@ import { QuizService } from './quiz.service';
 
 describe('QuizService', () => {
   const user = { userId: 'user-1', email: 'u@example.com' };
+  const baseSession = {
+    id: 's1',
+    category_id: 'c1',
+    tier: 'easy',
+  } as const;
+
+  const createAnswerRepo = () => ({
+    getSessionOrThrow: jest.fn().mockResolvedValue(baseSession),
+    validateSessionWord: jest.fn().mockResolvedValue({
+      id: 'w1',
+      target_word: 'hola',
+    }),
+    saveAnswerAndUpdateProgress: jest.fn().mockResolvedValue({
+      sessionProgress: {
+        totalWords: 10,
+        answeredWords: 1,
+        remainingWords: 9,
+        sessionAccuracy: 0,
+      },
+      wordProgress: {
+        wordId: 'w1',
+        correctCount: 0,
+        wrongCount: 1,
+        requiredCorrect: 6,
+        mastered: false,
+      },
+    }),
+  });
 
   it('treats answer after 30s as timeout and incorrect', async () => {
     const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(100_000);
-    const repo = {
-      getSessionOrThrow: jest.fn().mockResolvedValue({
-        id: 's1',
-        category_id: 'c1',
-        tier: 'easy',
-      }),
-      validateSessionWord: jest.fn().mockResolvedValue({
-        id: 'w1',
-        target_word: 'hola',
-      }),
-      saveAnswerAndUpdateProgress: jest.fn().mockResolvedValue({
-        sessionProgress: {
-          totalWords: 10,
-          answeredWords: 1,
-          remainingWords: 9,
-          sessionAccuracy: 0,
-        },
-        wordProgress: {
-          wordId: 'w1',
-          correctCount: 0,
-          wrongCount: 1,
-          requiredCorrect: 6,
-          mastered: false,
-        },
-      }),
-    };
+    const repo = createAnswerRepo();
     const tokenService = {
       verify: jest.fn().mockReturnValue({
         sessionId: 's1',
         userId: 'user-1',
         wordId: 'w1',
-        issuedAtMs: 69_000,
+        issuedAtMs: 70_000,
       }),
       create: jest.fn(),
     };
@@ -57,6 +60,65 @@ describe('QuizService', () => {
       }),
     );
 
+    nowSpy.mockRestore();
+  });
+
+  it('does not timeout before 30s and trims selected option', async () => {
+    const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(99_999);
+    const repo = createAnswerRepo();
+    const tokenService = {
+      verify: jest.fn().mockReturnValue({
+        sessionId: 's1',
+        userId: 'user-1',
+        wordId: 'w1',
+        issuedAtMs: 70_000,
+      }),
+      create: jest.fn(),
+    };
+
+    const service = new QuizService(repo as never, tokenService as never);
+    const response = await service.answerQuestion(user, 's1', {
+      questionToken: 'token',
+      selectedOption: ' hola ',
+    });
+
+    expect(response.wasTimeout).toBe(false);
+    expect(response.isCorrect).toBe(true);
+    expect(repo.saveAnswerAndUpdateProgress).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isCorrect: true,
+        selectedOption: 'hola',
+      }),
+    );
+
+    nowSpy.mockRestore();
+  });
+
+  it('treats answer after 31s as timeout and records timeout marker', async () => {
+    const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(101_000);
+    const repo = createAnswerRepo();
+    const tokenService = {
+      verify: jest.fn().mockReturnValue({
+        sessionId: 's1',
+        userId: 'user-1',
+        wordId: 'w1',
+        issuedAtMs: 70_000,
+      }),
+      create: jest.fn(),
+    };
+
+    const service = new QuizService(repo as never, tokenService as never);
+    const response = await service.answerQuestion(user, 's1', {
+      questionToken: 'token',
+      selectedOption: 'hola',
+    });
+
+    expect(response.wasTimeout).toBe(true);
+    expect(repo.saveAnswerAndUpdateProgress).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedOption: '__timeout__',
+      }),
+    );
     nowSpy.mockRestore();
   });
 
@@ -152,16 +214,24 @@ describe('QuizService', () => {
         },
         tierCompleted: true,
         rewards: {
-          basePoints: 20,
-          accuracyBonusPoints: 6,
+          basePoints: 100,
+          accuracyBonusPoints: 25,
+          grossPoints: 125,
           antiGrindMultiplier: 1,
-          grantedPoints: 26,
+          repeatsInLast24h: 0,
+          isRepeatReward: false,
+          finalPoints: 125,
+          grantedPoints: 125,
           repeatPointsToday: 0,
-          repeatPointsCap: 120,
+          repeatPointsCap: 300,
+        },
+        rewardLedger: {
+          reason: 'tier_completed',
+          delta: 125,
         },
         wallet: {
-          pointsBalance: 26,
-          lifetimePoints: 26,
+          pointsBalance: 125,
+          lifetimePoints: 125,
         },
       }),
     };

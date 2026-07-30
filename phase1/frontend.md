@@ -9,6 +9,7 @@ z uwzględnieniem guardów dostępu, reguł UX quizu i integracji z backendem RE
 - Angular (aktualnie ustalony stack projektowy).
 - API wyłącznie REST (`/v1`).
 - Auth: realizowany przez Supabase po stronie frontendu, backend przyjmuje i weryfikuje JWT.
+- Wolumen słów per kategoria: `easy=10`, `hard=25`, `expert=50` (łącznie 50).
 - 30 sekund na pytanie, timeout traktowany jak błąd.
 - Brak natychmiastowego pokazywania poprawnej odpowiedzi po błędzie.
 - Możliwa kontynuacja aktywnej sesji po odświeżeniu strony.

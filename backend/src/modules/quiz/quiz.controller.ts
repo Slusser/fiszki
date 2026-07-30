@@ -57,7 +57,9 @@ export class QuizController {
   @Throttle({ default: { limit: 60, ttl: 60_000 } })
   @ApiOperation({ summary: 'Submit answer for current session question' })
   @ApiOkResponse({ description: 'Answer processed and progression updated' })
-  @ApiBadRequestResponse({ description: 'Invalid token/timestamp or business rule failure' })
+  @ApiBadRequestResponse({
+    description: 'Invalid token/timestamp or business rule failure',
+  })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid bearer token' })
   @ApiTooManyRequestsResponse({ description: 'Rate limit exceeded' })
   answerQuestion(
@@ -71,7 +73,9 @@ export class QuizController {
   @Post('sessions/:sessionId/finish')
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @ApiOperation({ summary: 'Finish session and calculate rewards' })
-  @ApiOkResponse({ description: 'Session finished and rewards applied (idempotent)' })
+  @ApiOkResponse({
+    description: 'Session finished and rewards applied (idempotent)',
+  })
   @ApiBadRequestResponse({ description: 'Session cannot be finished yet' })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid bearer token' })
   @ApiTooManyRequestsResponse({ description: 'Rate limit exceeded' })

@@ -1,5 +1,9 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
+import {
+  createClient,
+  type SupabaseClient,
+  type User,
+} from '@supabase/supabase-js';
 
 @Injectable()
 export class AuthRepository {

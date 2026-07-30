@@ -4,12 +4,16 @@ import { CatalogService } from './catalog.service';
 describe('CatalogService', () => {
   it('maps insufficient points error to business bad request', async () => {
     const repo = {
-      unlockCategory: jest.fn().mockRejectedValue(new Error('INSUFFICIENT_POINTS')),
       getCategories: jest.fn(),
       getCategoryTiers: jest.fn(),
     };
+    const rewardsService = {
+      unlockCategory: jest
+        .fn()
+        .mockRejectedValue(new Error('INSUFFICIENT_POINTS')),
+    };
 
-    const service = new CatalogService(repo as never);
+    const service = new CatalogService(repo as never, rewardsService as never);
 
     await expect(
       service.unlockCategory(

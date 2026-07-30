@@ -143,6 +143,10 @@ Sugerowany wzór punktacji (MVP):
 
 ### 7.4 Dane i treść
 - Decyzja: słowa będą generowane automatycznie.
+- Decyzja: wolumen słów na kategorię to łącznie 50 pozycji:
+  - tier 1 (`easy`): 10 słów,
+  - tier 2 (`hard`): 25 słów,
+  - tier 3 (`expert`): 50 słów.
 - Decyzja: optymalny format wejściowy to `CSV UTF-8` (jeden plik per tier lub jeden plik globalny z kolumną tier) pod szybki import do Postgresa (`COPY`) i prosty pipeline seedowania.
 - Proponowany minimalny schemat CSV:
   - `category_slug,tier,source_word,target_word`

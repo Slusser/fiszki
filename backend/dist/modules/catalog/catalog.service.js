@@ -11,11 +11,14 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CatalogService = void 0;
 const common_1 = require("@nestjs/common");
+const rewards_service_1 = require("../rewards/rewards.service");
 const catalog_repository_1 = require("./catalog.repository");
 let CatalogService = class CatalogService {
     catalogRepository;
-    constructor(catalogRepository) {
+    rewardsService;
+    constructor(catalogRepository, rewardsService) {
         this.catalogRepository = catalogRepository;
+        this.rewardsService = rewardsService;
     }
     getCategories(user) {
         return this.catalogRepository.getCategories(user.userId);
@@ -25,7 +28,7 @@ let CatalogService = class CatalogService {
     }
     async unlockCategory(user, categoryId) {
         try {
-            return await this.catalogRepository.unlockCategory(user.userId, categoryId);
+            return await this.rewardsService.unlockCategory(user.userId, categoryId);
         }
         catch (error) {
             if (error instanceof Error && error.message === 'INSUFFICIENT_POINTS') {
@@ -38,6 +41,7 @@ let CatalogService = class CatalogService {
 exports.CatalogService = CatalogService;
 exports.CatalogService = CatalogService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [catalog_repository_1.CatalogRepository])
+    __metadata("design:paramtypes", [catalog_repository_1.CatalogRepository,
+        rewards_service_1.RewardsService])
 ], CatalogService);
 //# sourceMappingURL=catalog.service.js.map

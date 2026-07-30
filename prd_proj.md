@@ -18,10 +18,10 @@ Stworzyć aplikację webową do nauki słownictwa hiszpańskiego przez krótkie,
 
 ### 4.1 Zawartość
 - 200 statycznych kategorii.
-- Każda kategoria zawiera do 200 słów podzielonych na 3 tiery:
-  - Easy: 50 słów
-  - Hard: 100 słów
-  - Expert: 200 słów
+- Każda kategoria zawiera łącznie 50 słów podzielonych progresywnie na 3 tiery:
+  - Easy: 10 słów
+  - Hard: 25 słów
+  - Expert: 50 słów
 - Na starcie dostępnych 10 kategorii.
 
 ### 4.2 Mechanika nauki
@@ -95,7 +95,7 @@ Rekomendacja:
 - Skorygować punktację wagą trudności kategorii.
 - Docelowo wprowadzić telemetryczny tuning rewardów.
 
-### 6.5 Ryzyko: wydajność i skalowanie (do 40k słów)
+### 6.5 Ryzyko: wydajność i skalowanie (do 10k słów)
 Problem: wolne zapytania przy losowaniu i śledzeniu stanu każdego słowa.
 Rekomendacja:
 - Indeksy na (`user_id`, `word_id`, `tier`, `status`).

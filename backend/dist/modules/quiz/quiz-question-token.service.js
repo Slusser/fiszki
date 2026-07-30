@@ -43,7 +43,9 @@ let QuizQuestionTokenService = class QuizQuestionTokenService {
         }
     }
     sign(encodedPayload) {
-        return (0, crypto_1.createHmac)('sha256', this.secret).update(encodedPayload).digest('base64url');
+        return (0, crypto_1.createHmac)('sha256', this.secret)
+            .update(encodedPayload)
+            .digest('base64url');
     }
 };
 exports.QuizQuestionTokenService = QuizQuestionTokenService;

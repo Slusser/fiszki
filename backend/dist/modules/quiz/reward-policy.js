@@ -1,30 +1,42 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.REPEAT_POINTS_DAILY_CAP = exports.ANTI_GRIND_MULTIPLIERS = exports.TIER_BASE_POINTS = void 0;
+exports.REPEAT_POINTS_DAILY_CAP = exports.TIER_BASE_POINTS = void 0;
 exports.calculateAccuracyBonus = calculateAccuracyBonus;
 exports.resolveAntiGrindMultiplier = resolveAntiGrindMultiplier;
 exports.applyRepeatCap = applyRepeatCap;
 exports.TIER_BASE_POINTS = {
-    easy: 20,
-    hard: 45,
-    expert: 80,
+    easy: 100,
+    hard: 220,
+    expert: 420,
 };
-exports.ANTI_GRIND_MULTIPLIERS = [1, 0.6, 0.35, 0.2, 0.1];
-exports.REPEAT_POINTS_DAILY_CAP = 120;
+exports.REPEAT_POINTS_DAILY_CAP = 300;
 function calculateAccuracyBonus(basePoints, accuracy) {
     if (basePoints <= 0) {
         return 0;
     }
-    const normalizedAccuracy = Math.max(0, Math.min(100, accuracy));
-    return Math.round(basePoints * Math.min(0.3, (normalizedAccuracy / 100) * 0.3));
+    if (accuracy >= 95) {
+        return Math.round(basePoints * 0.25);
+    }
+    if (accuracy >= 85) {
+        return Math.round(basePoints * 0.1);
+    }
+    return 0;
 }
-function resolveAntiGrindMultiplier(rewardCountToday) {
-    const index = Math.min(Math.max(0, Math.floor(rewardCountToday)), exports.ANTI_GRIND_MULTIPLIERS.length - 1);
-    return exports.ANTI_GRIND_MULTIPLIERS[index] ?? 0.1;
+function resolveAntiGrindMultiplier(repeatsInLast24h) {
+    if (repeatsInLast24h <= 0) {
+        return 1;
+    }
+    if (repeatsInLast24h === 1) {
+        return 0.4;
+    }
+    if (repeatsInLast24h === 2) {
+        return 0.2;
+    }
+    return 0.1;
 }
 function applyRepeatCap(params) {
     const preCapPoints = Math.round(params.grossPoints * params.antiGrindMultiplier);
-    if (params.rewardCountToday === 0) {
+    if (params.repeatsInLast24h <= 0) {
         return preCapPoints;
     }
     const remainingRepeatCap = Math.max(exports.REPEAT_POINTS_DAILY_CAP - params.repeatPointsToday, 0);

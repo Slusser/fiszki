@@ -9,6 +9,7 @@ Zaimplementować backend `NestJS` dla MVP aplikacji fiszek, oparty o `REST API`,
 - Jedno środowisko: `dev`.
 - Supabase jako baza i auth provider.
 - Ranking poza Fazą 1.
+- Wolumen słów per kategoria: `easy=10`, `hard=25`, `expert=50` (łącznie 50).
 - Reguły quizu:
   - bazowe wymaganie opanowania słowa: 3 poprawne,
   - błąd: `required_correct += 3`,

@@ -10,10 +10,13 @@ interface QuestionTokenPayload {
 
 @Injectable()
 export class QuizQuestionTokenService {
-  private readonly secret = process.env.QUIZ_QUESTION_TOKEN_SECRET ?? 'dev-quiz-question-secret';
+  private readonly secret =
+    process.env.QUIZ_QUESTION_TOKEN_SECRET ?? 'dev-quiz-question-secret';
 
   create(payload: QuestionTokenPayload): string {
-    const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    const encodedPayload = Buffer.from(JSON.stringify(payload)).toString(
+      'base64url',
+    );
     const signature = this.sign(encodedPayload);
     return `${encodedPayload}.${signature}`;
   }
@@ -55,6 +58,8 @@ export class QuizQuestionTokenService {
   }
 
   private sign(encodedPayload: string): string {
-    return createHmac('sha256', this.secret).update(encodedPayload).digest('base64url');
+    return createHmac('sha256', this.secret)
+      .update(encodedPayload)
+      .digest('base64url');
   }
 }

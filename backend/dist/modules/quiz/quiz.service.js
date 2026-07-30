@@ -78,7 +78,8 @@ let QuizService = QuizService_1 = class QuizService {
         const startedAt = Date.now();
         const session = await this.quizRepository.getSessionOrThrow(sessionId, user.userId);
         const tokenPayload = this.quizQuestionTokenService.verify(payload.questionToken);
-        if (tokenPayload.sessionId !== session.id || tokenPayload.userId !== user.userId) {
+        if (tokenPayload.sessionId !== session.id ||
+            tokenPayload.userId !== user.userId) {
             throw new common_1.UnauthorizedException('Question token does not match current session');
         }
         const elapsedMs = Date.now() - tokenPayload.issuedAtMs;
@@ -86,10 +87,12 @@ let QuizService = QuizService_1 = class QuizService {
             throw new common_1.BadRequestException('Question token timestamp is invalid');
         }
         const word = await this.quizRepository.validateSessionWord(session.id, session.category_id, session.tier, tokenPayload.wordId);
-        const wasTimeout = elapsedMs > QUESTION_TIMEOUT_MS;
+        const wasTimeout = elapsedMs >= QUESTION_TIMEOUT_MS;
         const normalizedSelectedOption = payload.selectedOption.trim();
         const isCorrect = !wasTimeout && normalizedSelectedOption === word.target_word;
-        const recordedOption = wasTimeout ? '__timeout__' : normalizedSelectedOption;
+        const recordedOption = wasTimeout
+            ? '__timeout__'
+            : normalizedSelectedOption;
         const result = await this.quizRepository.saveAnswerAndUpdateProgress({
             userId: user.userId,
             sessionId: session.id,
@@ -113,7 +116,9 @@ let QuizService = QuizService_1 = class QuizService {
     }
     finishSession(user, sessionId) {
         const startedAt = Date.now();
-        return this.quizRepository.finishSession(user.userId, sessionId).finally(() => {
+        return this.quizRepository
+            .finishSession(user.userId, sessionId)
+            .finally(() => {
             this.logger.debug(`finishSession user=${user.userId} session=${sessionId} took=${Date.now() - startedAt}ms`);
         });
     }

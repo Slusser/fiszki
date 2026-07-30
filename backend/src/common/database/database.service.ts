@@ -1,11 +1,24 @@
-import { Injectable, Logger, OnModuleDestroy, ServiceUnavailableException } from '@nestjs/common';
-import { Pool, type PoolClient, type QueryResult, type QueryResultRow } from 'pg';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import {
+  Pool,
+  type PoolClient,
+  type QueryResult,
+  type QueryResultRow,
+} from 'pg';
 
 @Injectable()
 export class DatabaseService implements OnModuleDestroy {
   private readonly logger = new Logger(DatabaseService.name);
-  private readonly connectionString = process.env.SUPABASE_DB_URL ?? process.env.DATABASE_URL;
-  private readonly slowQueryThresholdMs = Number(process.env.DB_SLOW_QUERY_MS ?? 150);
+  private readonly connectionString =
+    process.env.SUPABASE_DB_URL ?? process.env.DATABASE_URL;
+  private readonly slowQueryThresholdMs = Number(
+    process.env.DB_SLOW_QUERY_MS ?? 150,
+  );
   private readonly pool = this.connectionString
     ? new Pool({ connectionString: this.connectionString })
     : null;
@@ -15,7 +28,9 @@ export class DatabaseService implements OnModuleDestroy {
     params: unknown[] = [],
   ): Promise<QueryResult<T>> {
     if (!this.pool) {
-      throw new ServiceUnavailableException('Database connection is not configured');
+      throw new ServiceUnavailableException(
+        'Database connection is not configured',
+      );
     }
 
     const startedAt = Date.now();
@@ -33,7 +48,9 @@ export class DatabaseService implements OnModuleDestroy {
 
   async getClient(): Promise<PoolClient> {
     if (!this.pool) {
-      throw new ServiceUnavailableException('Database connection is not configured');
+      throw new ServiceUnavailableException(
+        'Database connection is not configured',
+      );
     }
 
     return this.pool.connect();

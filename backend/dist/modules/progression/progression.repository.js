@@ -50,7 +50,8 @@ let ProgressionRepository = class ProgressionRepository {
                 tier: row.tier,
                 totalWords: Number(row.total_words),
                 masteredWords: Number(row.mastered_words),
-                completed: Number(row.total_words) > 0 && Number(row.total_words) === Number(row.mastered_words),
+                completed: Number(row.total_words) > 0 &&
+                    Number(row.total_words) === Number(row.mastered_words),
             };
             if (!existing) {
                 byCategory.set(row.category_id, {

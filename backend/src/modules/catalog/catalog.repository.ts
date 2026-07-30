@@ -2,7 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { type PoolClient } from 'pg';
 import { DatabaseService } from '../../common/database/database.service';
 import { CategoriesResponseDto } from './dto/categories-response.dto';
-import { CategoryTiersResponseDto, type TierName } from './dto/tiers-response.dto';
+import {
+  CategoryTiersResponseDto,
+  type TierName,
+} from './dto/tiers-response.dto';
 import { UnlockCategoryResponseDto } from './dto/unlock-category-response.dto';
 
 interface CategoryRow {
@@ -58,7 +61,10 @@ export class CatalogRepository {
     };
   }
 
-  async getCategoryTiers(categoryId: string, userId: string): Promise<CategoryTiersResponseDto> {
+  async getCategoryTiers(
+    categoryId: string,
+    userId: string,
+  ): Promise<CategoryTiersResponseDto> {
     const categoryExists = await this.databaseService.query<{ id: string }>(
       `select id from public.categories where id = $1 and is_active = true limit 1`,
       [categoryId],
@@ -100,7 +106,10 @@ export class CatalogRepository {
     };
   }
 
-  async unlockCategory(userId: string, categoryId: string): Promise<UnlockCategoryResponseDto> {
+  async unlockCategory(
+    userId: string,
+    categoryId: string,
+  ): Promise<UnlockCategoryResponseDto> {
     const client = await this.databaseService.getClient();
 
     try {
@@ -170,7 +179,9 @@ export class CatalogRepository {
     }
 
     if (alreadyUnlocked) {
-      const walletState = await client.query<{ points_balance: number | string }>(
+      const walletState = await client.query<{
+        points_balance: number | string;
+      }>(
         `select points_balance from public.user_wallet where user_id = $1 limit 1`,
         [userId],
       );
@@ -185,7 +196,9 @@ export class CatalogRepository {
     }
 
     if (unlockCost > 0) {
-      const walletUpdate = await client.query<{ points_balance: number | string }>(
+      const walletUpdate = await client.query<{
+        points_balance: number | string;
+      }>(
         `
           update public.user_wallet
           set

@@ -12,11 +12,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.QuizRepository = void 0;
 const common_1 = require("@nestjs/common");
 const database_service_1 = require("../../common/database/database.service");
-const reward_policy_1 = require("./reward-policy");
+const rewards_service_1 = require("../rewards/rewards.service");
 let QuizRepository = class QuizRepository {
     databaseService;
-    constructor(databaseService) {
+    rewardsService;
+    constructor(databaseService, rewardsService) {
         this.databaseService = databaseService;
+        this.rewardsService = rewardsService;
     }
     async startSession(userId, categoryId, tier) {
         await this.ensureCategoryAccess(userId, categoryId);
@@ -131,7 +133,9 @@ let QuizRepository = class QuizRepository {
         const answeredWords = Number(row?.answered_words ?? 0);
         const correctAnswers = Number(row?.correct_answers ?? 0);
         const remainingWords = Math.max(totalWords - answeredWords, 0);
-        const sessionAccuracy = answeredWords > 0 ? Number(((correctAnswers / answeredWords) * 100).toFixed(2)) : 0;
+        const sessionAccuracy = answeredWords > 0
+            ? Number(((correctAnswers / answeredWords) * 100).toFixed(2))
+            : 0;
         return {
             totalWords,
             answeredWords,
@@ -174,7 +178,10 @@ let QuizRepository = class QuizRepository {
             const wordProgress = await this.upsertWordProgress(client, params.userId, params.wordId, params.tier, params.isCorrect);
             const sessionProgress = await this.getSessionProgressMetaWithClient(client, params.sessionId, params.categoryId, params.tier);
             await client.query('commit');
-            return { wordProgress: { ...wordProgress, wordId: params.wordId }, sessionProgress };
+            return {
+                wordProgress: { ...wordProgress, wordId: params.wordId },
+                sessionProgress,
+            };
         }
         catch (error) {
             await client.query('rollback');
@@ -217,7 +224,15 @@ let QuizRepository = class QuizRepository {
           where id = $1
         `, [session.id, finishedAt, score, accuracy]);
             const tierCompleted = await this.isTierCompleted(client, userId, session.category_id, session.tier);
-            const rewards = await this.applyFinishRewards(client, userId, session.id, session.tier, accuracy, tierCompleted);
+            const { rewardBreakdown, ledgerSnapshot } = await this.rewardsService.applyReward({
+                client,
+                userId,
+                sessionId: session.id,
+                categoryId: session.category_id,
+                tier: session.tier,
+                accuracy,
+                tierCompleted,
+            });
             const wallet = await this.getWalletSnapshot(client, userId);
             await client.query('commit');
             return {
@@ -231,7 +246,8 @@ let QuizRepository = class QuizRepository {
                 finishedAt,
                 progress,
                 tierCompleted,
-                rewards,
+                rewards: rewardBreakdown,
+                rewardLedger: ledgerSnapshot,
                 wallet,
             };
         }
@@ -353,7 +369,9 @@ let QuizRepository = class QuizRepository {
             totalWords,
             answeredWords,
             remainingWords: Math.max(totalWords - answeredWords, 0),
-            sessionAccuracy: answeredWords > 0 ? Number(((correctAnswers / answeredWords) * 100).toFixed(2)) : 0,
+            sessionAccuracy: answeredWords > 0
+                ? Number(((correctAnswers / answeredWords) * 100).toFixed(2))
+                : 0,
         };
     }
     async getSessionForFinishWithLock(client, sessionId, userId) {
@@ -387,62 +405,6 @@ let QuizRepository = class QuizRepository {
         const totalWords = Number(row?.total_words ?? 0);
         const masteredWords = Number(row?.mastered_words ?? 0);
         return totalWords > 0 && totalWords === masteredWords;
-    }
-    async applyFinishRewards(client, userId, sessionId, tier, accuracy, tierCompleted) {
-        const basePoints = tierCompleted ? reward_policy_1.TIER_BASE_POINTS[tier] : 0;
-        const accuracyBonusPoints = tierCompleted
-            ? (0, reward_policy_1.calculateAccuracyBonus)(basePoints, accuracy)
-            : 0;
-        const grossPoints = basePoints + accuracyBonusPoints;
-        const repeatResult = await client.query(`
-        select
-          count(*)::int as reward_count_today,
-          coalesce(sum(case when reason = 'session_finish_reward_repeat' then delta else 0 end), 0)::int as repeat_points_today
-        from public.points_ledger
-        where user_id = $1
-          and reason in ('session_finish_reward_first', 'session_finish_reward_repeat')
-          and created_at >= date_trunc('day', now())
-      `, [userId]);
-        const rewardCountToday = Number(repeatResult.rows[0]?.reward_count_today ?? 0);
-        const repeatPointsToday = Number(repeatResult.rows[0]?.repeat_points_today ?? 0);
-        const antiGrindMultiplier = (0, reward_policy_1.resolveAntiGrindMultiplier)(rewardCountToday);
-        const isFirstRewardToday = rewardCountToday === 0;
-        const grantedPoints = (0, reward_policy_1.applyRepeatCap)({
-            grossPoints,
-            antiGrindMultiplier,
-            rewardCountToday,
-            repeatPointsToday,
-        });
-        const reason = isFirstRewardToday
-            ? 'session_finish_reward_first'
-            : 'session_finish_reward_repeat';
-        await client.query(`
-        insert into public.user_wallet (user_id, points_balance, lifetime_points)
-        values ($1, 0, 0)
-        on conflict (user_id) do nothing
-      `, [userId]);
-        if (grantedPoints > 0) {
-            await client.query(`
-          update public.user_wallet
-          set
-            points_balance = points_balance + $2,
-            lifetime_points = lifetime_points + $2,
-            updated_at = now()
-          where user_id = $1
-        `, [userId, grantedPoints]);
-        }
-        await client.query(`
-        insert into public.points_ledger (user_id, reason, delta, reference_type, reference_id)
-        values ($1, $2, $3, 'quiz_session', $4::uuid)
-      `, [userId, reason, grantedPoints, sessionId]);
-        return {
-            basePoints,
-            accuracyBonusPoints,
-            antiGrindMultiplier,
-            grantedPoints,
-            repeatPointsToday,
-            repeatPointsCap: reward_policy_1.REPEAT_POINTS_DAILY_CAP,
-        };
     }
     async getWalletSnapshot(client, userId) {
         const result = await client.query(`
@@ -483,6 +445,10 @@ let QuizRepository = class QuizRepository {
             progress,
             tierCompleted,
             rewards: existingReward,
+            rewardLedger: {
+                reason: existingReward.reason,
+                delta: existingReward.grantedPoints,
+            },
             wallet,
         };
     }
@@ -497,19 +463,26 @@ let QuizRepository = class QuizRepository {
         limit 1
       `, [userId, sessionId]);
         const grantedPoints = Number(result.rows[0]?.delta ?? 0);
+        const reason = result.rows[0]?.reason ?? null;
         return {
             basePoints: 0,
             accuracyBonusPoints: 0,
-            antiGrindMultiplier: 0,
+            grossPoints: grantedPoints,
+            antiGrindMultiplier: 1,
+            repeatsInLast24h: 0,
+            isRepeatReward: reason === 'tier_completed_repeat',
+            finalPoints: grantedPoints,
             grantedPoints,
             repeatPointsToday: 0,
-            repeatPointsCap: reward_policy_1.REPEAT_POINTS_DAILY_CAP,
+            repeatPointsCap: rewards_service_1.REPEAT_POINTS_DAILY_CAP,
+            reason,
         };
     }
 };
 exports.QuizRepository = QuizRepository;
 exports.QuizRepository = QuizRepository = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [database_service_1.DatabaseService])
+    __metadata("design:paramtypes", [database_service_1.DatabaseService,
+        rewards_service_1.RewardsService])
 ], QuizRepository);
 //# sourceMappingURL=quiz.repository.js.map

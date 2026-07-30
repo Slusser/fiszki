@@ -9,7 +9,6 @@ import type { AnswerQuestionDto } from './dto/answer-question.dto';
 import type { AnswerQuestionResponseDto } from './dto/answer-question-response.dto';
 import type { FinishQuizSessionResponseDto } from './dto/finish-quiz-session-response.dto';
 import type { NextQuestionResponseDto } from './dto/next-question-response.dto';
-import type { QuizTier } from './dto/quiz-tier.dto';
 import type { StartQuizSessionResponseDto } from './dto/start-quiz-session-response.dto';
 import type { StartQuizSessionDto } from './dto/start-quiz-session.dto';
 import { QuizQuestionTokenService } from './quiz-question-token.service';
@@ -40,9 +39,15 @@ export class QuizService {
       });
   }
 
-  async getNextQuestion(user: AuthUserDto, sessionId: string): Promise<NextQuestionResponseDto> {
+  async getNextQuestion(
+    user: AuthUserDto,
+    sessionId: string,
+  ): Promise<NextQuestionResponseDto> {
     const startedAt = Date.now();
-    const session = await this.quizRepository.getSessionOrThrow(sessionId, user.userId);
+    const session = await this.quizRepository.getSessionOrThrow(
+      sessionId,
+      user.userId,
+    );
     const progress = await this.quizRepository.getSessionProgressMeta(
       session.id,
       session.category_id,
@@ -110,11 +115,21 @@ export class QuizService {
     payload: AnswerQuestionDto,
   ): Promise<AnswerQuestionResponseDto> {
     const startedAt = Date.now();
-    const session = await this.quizRepository.getSessionOrThrow(sessionId, user.userId);
-    const tokenPayload = this.quizQuestionTokenService.verify(payload.questionToken);
+    const session = await this.quizRepository.getSessionOrThrow(
+      sessionId,
+      user.userId,
+    );
+    const tokenPayload = this.quizQuestionTokenService.verify(
+      payload.questionToken,
+    );
 
-    if (tokenPayload.sessionId !== session.id || tokenPayload.userId !== user.userId) {
-      throw new UnauthorizedException('Question token does not match current session');
+    if (
+      tokenPayload.sessionId !== session.id ||
+      tokenPayload.userId !== user.userId
+    ) {
+      throw new UnauthorizedException(
+        'Question token does not match current session',
+      );
     }
 
     const elapsedMs = Date.now() - tokenPayload.issuedAtMs;
@@ -125,20 +140,23 @@ export class QuizService {
     const word = await this.quizRepository.validateSessionWord(
       session.id,
       session.category_id,
-      session.tier as QuizTier,
+      session.tier,
       tokenPayload.wordId,
     );
 
-    const wasTimeout = elapsedMs > QUESTION_TIMEOUT_MS;
+    const wasTimeout = elapsedMs >= QUESTION_TIMEOUT_MS;
     const normalizedSelectedOption = payload.selectedOption.trim();
-    const isCorrect = !wasTimeout && normalizedSelectedOption === word.target_word;
-    const recordedOption = wasTimeout ? '__timeout__' : normalizedSelectedOption;
+    const isCorrect =
+      !wasTimeout && normalizedSelectedOption === word.target_word;
+    const recordedOption = wasTimeout
+      ? '__timeout__'
+      : normalizedSelectedOption;
 
     const result = await this.quizRepository.saveAnswerAndUpdateProgress({
       userId: user.userId,
       sessionId: session.id,
       categoryId: session.category_id,
-      tier: session.tier as QuizTier,
+      tier: session.tier,
       wordId: word.id,
       selectedOption: recordedOption,
       isCorrect,
@@ -159,20 +177,25 @@ export class QuizService {
     return response;
   }
 
-  finishSession(user: AuthUserDto, sessionId: string): Promise<FinishQuizSessionResponseDto> {
+  finishSession(
+    user: AuthUserDto,
+    sessionId: string,
+  ): Promise<FinishQuizSessionResponseDto> {
     const startedAt = Date.now();
-    return this.quizRepository.finishSession(user.userId, sessionId).finally(() => {
-      this.logger.debug(
-        `finishSession user=${user.userId} session=${sessionId} took=${Date.now() - startedAt}ms`,
-      );
-    });
+    return this.quizRepository
+      .finishSession(user.userId, sessionId)
+      .finally(() => {
+        this.logger.debug(
+          `finishSession user=${user.userId} session=${sessionId} took=${Date.now() - startedAt}ms`,
+        );
+      });
   }
 
   private shuffle<T>(items: T[]): T[] {
     const arr = [...items];
     for (let i = arr.length - 1; i > 0; i -= 1) {
       const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j]!, arr[i]!];
+      [arr[i], arr[j]] = [arr[j], arr[i]];
     }
     return arr;
   }
