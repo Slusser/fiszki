@@ -14,10 +14,7 @@ async function bootstrap() {
         .filter((origin) => origin.length > 0);
     const corsOrigins = configuredOrigins.length
         ? configuredOrigins
-        : [
-            'http://localhost:4200',
-            'https://iridescent-gecko-d55c93.netlify.app',
-        ];
+        : ['http://localhost:4200', 'https://iridescent-gecko-d55c93.netlify.app'];
     app.enableCors({
         origin: corsOrigins,
         methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],

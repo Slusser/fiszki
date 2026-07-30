@@ -1,9 +1,12 @@
 export interface ReadinessResponseDto {
-    status: 'ready';
+    status: 'ready' | 'degraded';
     checks: {
         app: 'ok';
-        database: 'unknown';
-        supabase: 'not_configured';
+        database: 'ok' | 'error' | 'not_configured';
+        supabase: 'ok' | 'not_configured';
+    };
+    details?: {
+        database?: string;
     };
     timestamp: string;
 }
