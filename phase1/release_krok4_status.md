@@ -9,7 +9,8 @@ Backend URL: `https://fiszki-xv3u.onrender.com`
 
 - PASS - endpoint chroniony bez tokena zwraca `401` (`GET /v1/me`).
 - PASS - endpoint chroniony z falszywym tokenem zwraca `401` (`GET /v1/me`).
-- BLOCKER (automatyzacja) - nieudana automatyczna rejestracja nowego usera przez Supabase Auth:
+- PASS - readiness backendu po poprawce DB URL: `status=ready`, `database=ok`, `supabase=ok`.
+- INFO (automatyzacja) - nieudana automatyczna rejestracja nowego usera przez Supabase Auth:
   - `email_address_invalid` dla domeny `example.com`,
   - `429` (rate limit) dla testowego adresu `gmail.com`.
 
@@ -17,6 +18,7 @@ Backend URL: `https://fiszki-xv3u.onrender.com`
 
 - PENDING - flow wymaga poprawnego JWT z Supabase Auth.
 - BLOCKER - brak pozyskanego tokena w automacie przez ograniczenia signup/rate limit.
+- FIX PREPARED - backend zmieniony tak, aby pytania byly losowane z puli slow nieopanowanych (`mastered=false`), co wymusza powtorki az do opanowania.
 
 ## 3) Rewards / unlock / ledger
 
@@ -25,6 +27,7 @@ Backend URL: `https://fiszki-xv3u.onrender.com`
 ## 4) Sesja i kontynuacja po odswiezeniu
 
 - PENDING - wymaga aktywnej sesji quizowej utworzonej przez zalogowanego usera.
+- FIX PREPARED - frontend summary usuniety z petli `effect` przez `untracked(...)` (naprawa ryzyka OOM na stronie podsumowania).
 
 ## Decyzja
 

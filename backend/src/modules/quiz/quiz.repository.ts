@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -49,7 +48,8 @@ interface ProgressRow {
 
 interface SessionStatsRow {
   total_words: number | string;
-  answered_words: number | string;
+  mastered_words: number | string;
+  answered_attempts: number | string;
   correct_answers: number | string;
 }
 
@@ -155,7 +155,7 @@ export class QuizRepository {
   }
 
   async getNextQuestionCandidate(
-    sessionId: string,
+    userId: string,
     categoryId: string,
     tier: QuizTier,
   ): Promise<WordRow | null> {
@@ -163,19 +163,18 @@ export class QuizRepository {
       `
         select w.id, w.source_word, w.target_word
         from public.words w
-        where w.category_id = $1
+        left join public.user_word_progress uwp
+          on uwp.word_id = w.id
+          and uwp.user_id = $1
+          and uwp.tier = $2
+        where w.category_id = $3
           and w.tier = $2
           and w.is_active = true
-          and not exists (
-            select 1
-            from public.quiz_answers qa
-            where qa.session_id = $3
-              and qa.word_id = w.id
-          )
+          and coalesce(uwp.mastered, false) = false
         order by random()
         limit 1
       `,
-      [categoryId, tier, sessionId],
+      [userId, tier, categoryId],
     );
 
     return result.rows[0] ?? null;
@@ -212,6 +211,7 @@ export class QuizRepository {
 
   async getSessionProgressMeta(
     sessionId: string,
+    userId: string,
     categoryId: string,
     tier: QuizTier,
   ): Promise<SessionProgressMetaDto> {
@@ -221,31 +221,43 @@ export class QuizRepository {
           (
             select count(*)::int
             from public.words w
-            where w.category_id = $2
-              and w.tier = $3
+            where w.category_id = $3
+              and w.tier = $4
               and w.is_active = true
           ) as total_words,
-          count(qa.id)::int as answered_words,
+          (
+            select coalesce(sum(case when uwp.mastered then 1 else 0 end), 0)::int
+            from public.words w
+            left join public.user_word_progress uwp
+              on uwp.word_id = w.id
+              and uwp.user_id = $2
+              and uwp.tier = $4
+            where w.category_id = $3
+              and w.tier = $4
+              and w.is_active = true
+          ) as mastered_words,
+          count(qa.id)::int as answered_attempts,
           coalesce(sum(case when qa.is_correct then 1 else 0 end), 0)::int as correct_answers
         from public.quiz_answers qa
         where qa.session_id = $1
       `,
-      [sessionId, categoryId, tier],
+      [sessionId, userId, categoryId, tier],
     );
 
     const row = result.rows[0];
     const totalWords = Number(row?.total_words ?? 0);
-    const answeredWords = Number(row?.answered_words ?? 0);
+    const masteredWords = Number(row?.mastered_words ?? 0);
+    const answeredAttempts = Number(row?.answered_attempts ?? 0);
     const correctAnswers = Number(row?.correct_answers ?? 0);
-    const remainingWords = Math.max(totalWords - answeredWords, 0);
+    const remainingWords = Math.max(totalWords - masteredWords, 0);
     const sessionAccuracy =
-      answeredWords > 0
-        ? Number(((correctAnswers / answeredWords) * 100).toFixed(2))
+      answeredAttempts > 0
+        ? Number(((correctAnswers / answeredAttempts) * 100).toFixed(2))
         : 0;
 
     return {
       totalWords,
-      answeredWords,
+      answeredWords: masteredWords,
       remainingWords,
       sessionAccuracy,
     };
@@ -273,21 +285,6 @@ export class QuizRepository {
     const word = result.rows[0];
     if (!word) {
       throw new ForbiddenException('Question does not belong to this session');
-    }
-
-    const alreadyAnswered = await this.databaseService.query<{ id: string }>(
-      `
-        select id
-        from public.quiz_answers
-        where session_id = $1
-          and word_id = $2
-        limit 1
-      `,
-      [sessionId, wordId],
-    );
-
-    if (alreadyAnswered.rows[0]) {
-      throw new ConflictException('Question already answered');
     }
 
     return word;
@@ -332,6 +329,7 @@ export class QuizRepository {
       const sessionProgress = await this.getSessionProgressMetaWithClient(
         client,
         params.sessionId,
+        params.userId,
         params.categoryId,
         params.tier,
       );
@@ -381,6 +379,7 @@ export class QuizRepository {
       const progress = await this.getSessionProgressMetaWithClient(
         client,
         session.id,
+        userId,
         session.category_id,
         session.tier,
       );
@@ -585,6 +584,7 @@ export class QuizRepository {
   private async getSessionProgressMetaWithClient(
     client: PoolClient,
     sessionId: string,
+    userId: string,
     categoryId: string,
     tier: QuizTier,
   ): Promise<SessionProgressMetaDto> {
@@ -594,30 +594,42 @@ export class QuizRepository {
           (
             select count(*)::int
             from public.words w
-            where w.category_id = $2
-              and w.tier = $3
+            where w.category_id = $3
+              and w.tier = $4
               and w.is_active = true
           ) as total_words,
-          count(qa.id)::int as answered_words,
+          (
+            select coalesce(sum(case when uwp.mastered then 1 else 0 end), 0)::int
+            from public.words w
+            left join public.user_word_progress uwp
+              on uwp.word_id = w.id
+              and uwp.user_id = $2
+              and uwp.tier = $4
+            where w.category_id = $3
+              and w.tier = $4
+              and w.is_active = true
+          ) as mastered_words,
+          count(qa.id)::int as answered_attempts,
           coalesce(sum(case when qa.is_correct then 1 else 0 end), 0)::int as correct_answers
         from public.quiz_answers qa
         where qa.session_id = $1
       `,
-      [sessionId, categoryId, tier],
+      [sessionId, userId, categoryId, tier],
     );
 
     const row = result.rows[0];
     const totalWords = Number(row?.total_words ?? 0);
-    const answeredWords = Number(row?.answered_words ?? 0);
+    const masteredWords = Number(row?.mastered_words ?? 0);
+    const answeredAttempts = Number(row?.answered_attempts ?? 0);
     const correctAnswers = Number(row?.correct_answers ?? 0);
 
     return {
       totalWords,
-      answeredWords,
-      remainingWords: Math.max(totalWords - answeredWords, 0),
+      answeredWords: masteredWords,
+      remainingWords: Math.max(totalWords - masteredWords, 0),
       sessionAccuracy:
-        answeredWords > 0
-          ? Number(((correctAnswers / answeredWords) * 100).toFixed(2))
+        answeredAttempts > 0
+          ? Number(((correctAnswers / answeredAttempts) * 100).toFixed(2))
           : 0,
     };
   }
@@ -722,6 +734,7 @@ export class QuizRepository {
     const progress = await this.getSessionProgressMetaWithClient(
       client,
       session.id,
+      userId,
       session.category_id,
       session.tier,
     );
