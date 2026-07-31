@@ -110,6 +110,7 @@ Zaprojektować i uruchomić warstwę danych MVP na Supabase tak, aby:
 - `infra/migrations/*` (DDL + indeksy + RLS).
 - `infra/seeds/*.csv` (dane wejściowe).
 - `infra/seeds/*.sql|*.ts` (import/idempotentny upsert).
+- `infra/seeds/002_seed_from_hiszpanski_200_kategorii_v40.sql` (import pelnego katalogu 200 kategorii z mapowaniem tierow 10/25/50).
 - Krótka instrukcja uruchomienia migracji i seeda w `README.md`.
 
 ## 9. Decyzje zamknięte
