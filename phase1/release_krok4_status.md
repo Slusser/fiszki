@@ -16,23 +16,29 @@ Backend URL: `https://fiszki-xv3u.onrender.com`
 
 ## 2) Quiz flow (start -> next-question -> answer -> finish)
 
-- PENDING - flow wymaga poprawnego JWT z Supabase Auth.
-- BLOCKER - brak pozyskanego tokena w automacie przez ograniczenia signup/rate limit.
-- FIX PREPARED - backend zmieniony tak, aby pytania byly losowane z puli slow nieopanowanych (`mastered=false`), co wymusza powtorki az do opanowania.
+- PASS - flow jest wykonywany przez realnego usera po deployu.
+- PASS - potwierdzone powtorki tych samych slow w jednej sesji:
+  - sesja `hard`: `repeated_words=25`, `all_attempts=75` (srednio 3 proby/slowo),
+  - sesja `easy`: widoczne sesje z `all_attempts=14` dla puli 10 slow.
+- PASS - backend losuje pytania z puli slow nieopanowanych (`mastered=false`), zgodnie z fixem.
 
 ## 3) Rewards / unlock / ledger
 
-- PENDING - wymaga przejscia flow quizu na poprawnym tokenie.
+- PASS - po `finish` powstaja wpisy rewardowe w `points_ledger` (`reference_type='quiz_session'`), m.in.:
+  - `tier_completed` `+125`,
+  - `tier_completed` `+275`,
+  - `tier_completed_repeat` `+40`.
+- PASS - spojnosc `wallet` vs `points_ledger` potwierdzona (`wallet_ledger_mismatched_users=0`).
+- PASS - odblokowania kategorii sa zapisywane (`category_unlocks=1`).
 
 ## 4) Sesja i kontynuacja po odswiezeniu
 
-- PENDING - wymaga aktywnej sesji quizowej utworzonej przez zalogowanego usera.
-- FIX PREPARED - frontend summary usuniety z petli `effect` przez `untracked(...)` (naprawa ryzyka OOM na stronie podsumowania).
+- FIX DEPLOYED - frontend summary usuniety z petli `effect` przez `untracked(...)` (naprawa ryzyka OOM na stronie podsumowania).
+- PASS (manual) - brak OOM po przejsciu do summary (potwierdzone przez QA manualny).
 
 ## Decyzja
 
-- **Krok 4: CZESCIOWO POTWIERDZONY** (infrastruktura i autoryzacja negatywna OK),
-- **Do pelnego zaliczenia potrzebny 1 manualny przebieg E2E z konta usera**.
+- **Krok 4: ZALICZONY**.
 
 ## Minimalny manualny run (2-3 min)
 

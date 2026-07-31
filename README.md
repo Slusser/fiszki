@@ -45,10 +45,19 @@ Z poziomu katalogu glownego projektu:
   - zastosuj migracje `002_phase1_day2_rls_and_policies.sql`,
   - zastosuj migracje `003_phase1_day2_auth_user_bootstrap.sql`,
   - zastosuj migracje `004_phase1_day3_advisor_performance_fixes.sql`,
-  - uruchom `infra/seeds/001_seed_words_from_csv.sql` z importem `infra/seeds/words_es.csv` (instrukcja jest w komentarzu na gorze pliku SQL),
+  - dla malego/sezonowego seedu: uruchom `infra/seeds/001_seed_words_from_csv.sql` z importem `infra/seeds/words_es.csv`,
+  - dla pelnego katalogu 200 kategorii (CSV v40): uruchom `infra/seeds/002_seed_from_hiszpanski_200_kategorii_v40.sql` z importem `C:/Users/Jakub/Downloads/Hiszpanski_200_Kategorii-v40.csv`,
   - wykonaj `infra/validation/001_day3_validation_queries.sql`,
   - wykonaj `infra/validation/002_day3_explain_analyze.sql`,
   - odhacz `infra/validation/003_day3_db_ready_checklist.md`.
+
+### Import pelnego katalogu (v40) - skrot
+
+1. Otworz `infra/seeds/002_seed_from_hiszpanski_200_kategorii_v40.sql`.
+2. Wykonaj sekcje `create extension` + `create temporary table`.
+3. W `psql` wykonaj:
+   - `\copy seed_catalog_v40_staging (categoria_es, categoria_pl, palabra_es, palabra_pl) from 'C:/Users/Jakub/Downloads/Hiszpanski_200_Kategorii-v40.csv' with (format csv, header true, encoding 'UTF8');`
+4. Wykonaj pozostala czesc skryptu.
 
 ## Konfiguracja backend env (Faza 1)
 
