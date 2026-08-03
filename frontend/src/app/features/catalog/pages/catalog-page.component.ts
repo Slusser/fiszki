@@ -409,13 +409,21 @@ export class CatalogPageComponent {
     const query = this.query().trim().toLowerCase();
     const filter = this.activeFilter();
 
-    return this.categories().filter((category) => {
-      const matchesQuery = !query || category.name.toLowerCase().includes(query);
-      if (!matchesQuery) {
-        return false;
-      }
-      return this.matchesFilter(category, filter);
-    });
+    return this.categories()
+      .filter((category) => {
+        const matchesQuery = !query || category.name.toLowerCase().includes(query);
+        if (!matchesQuery) {
+          return false;
+        }
+        return this.matchesFilter(category, filter);
+      })
+      .sort((left, right) => {
+        const rankDiff = this.categoryDisplayRank(left) - this.categoryDisplayRank(right);
+        if (rankDiff !== 0) {
+          return rankDiff;
+        }
+        return left.name.localeCompare(right.name, 'pl');
+      });
   });
 
   readonly guardMessage = computed(() => {
@@ -541,6 +549,17 @@ export class CatalogPageComponent {
     const completedTiers = this.completedTiersForCategory(category.id);
     const mastered = this.masteredWordsForCategory(category.id);
     return mastered > 0 && completedTiers < 3;
+  }
+
+  private categoryDisplayRank(category: CategoryListItem): number {
+    const isCompleted = this.completedTiersForCategory(category.id) >= 3;
+    if (isCompleted) {
+      return 2;
+    }
+    if (category.isUnlocked) {
+      return 0;
+    }
+    return 1;
   }
 
   private async loadCatalog(): Promise<void> {

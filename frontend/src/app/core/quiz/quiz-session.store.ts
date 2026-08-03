@@ -8,6 +8,7 @@ import {
   SessionProgressMeta,
   StartQuizSessionResponse,
   TierName,
+  WordProgressSnapshot,
 } from '../api/models';
 import { QuizApiService } from './quiz-api.service';
 
@@ -31,12 +32,14 @@ interface QuizSessionState {
   finalSummary: FinishQuizSessionResponse | null;
   feedback: QuizFeedback | null;
   error: string | null;
+  wordProgressById: Record<string, WordProgressSnapshot>;
 }
 
 const QUESTION_TIMEOUT_SECONDS = 30;
 const TIMEOUT_SUBMIT_OPTION = '__timeout__';
 const FEEDBACK_VISIBLE_MS = 700;
 const ACTIVE_SESSION_STORAGE_KEY = 'fiszki.activeQuizSession';
+const BASE_REQUIRED_CORRECT = 3;
 
 interface PersistedActiveQuizSession {
   sessionId: string;
@@ -74,6 +77,7 @@ export class QuizSessionStore {
     finalSummary: null,
     feedback: null,
     error: null,
+    wordProgressById: {},
   });
 
   private readonly timeLeft = signal(QUESTION_TIMEOUT_SECONDS);
@@ -106,6 +110,27 @@ export class QuizSessionStore {
   readonly timerProgressPercent = computed(
     () => (this.timeLeft() / QUESTION_TIMEOUT_SECONDS) * 100,
   );
+  readonly currentWordProgress = computed<WordProgressSnapshot | null>(() => {
+    const question = this.state().question;
+    if (!question) {
+      return null;
+    }
+    return this.state().wordProgressById[question.wordId] ?? null;
+  });
+  readonly currentWordRequiredCorrect = computed(() => {
+    const snapshot = this.currentWordProgress();
+    if (!snapshot) {
+      return BASE_REQUIRED_CORRECT;
+    }
+    return snapshot.requiredCorrect;
+  });
+  readonly currentWordCorrectCount = computed(() => {
+    const snapshot = this.currentWordProgress();
+    return snapshot?.correctCount ?? 0;
+  });
+  readonly currentWordRemainingCorrect = computed(() =>
+    Math.max(this.currentWordRequiredCorrect() - this.currentWordCorrectCount(), 0),
+  );
 
   async ensureSession(categoryId: string, tier: TierName): Promise<void> {
     const selectionKey = `${categoryId}:${tier}`;
@@ -130,6 +155,7 @@ export class QuizSessionStore {
       finalSummary: null,
       feedback: null,
       error: null,
+      wordProgressById: {},
     });
 
     try {
@@ -163,6 +189,7 @@ export class QuizSessionStore {
       finalSummary: null,
       feedback: null,
       error: null,
+      wordProgressById: {},
     });
   }
 
@@ -204,6 +231,7 @@ export class QuizSessionStore {
       finalSummary: null,
       feedback: null,
       error: null,
+      wordProgressById: {},
     }));
 
     try {
@@ -445,6 +473,10 @@ export class QuizSessionStore {
         : response.isCorrect
           ? { type: 'correct', message: 'Poprawna odpowiedz.' }
           : { type: 'incorrect', message: 'Bledna odpowiedz.' },
+      wordProgressById: {
+        ...value.wordProgressById,
+        [response.wordId]: response.wordProgress,
+      },
     }));
   }
 

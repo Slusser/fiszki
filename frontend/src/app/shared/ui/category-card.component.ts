@@ -283,11 +283,11 @@ export class CategoryCardComponent {
   readonly tierOrder: TierName[] = ['easy', 'hard', 'expert'];
 
   masteredWords(): number {
-    return this.tiers.reduce((sum, tier) => sum + tier.masteredWords, 0);
+    return this.tiers.reduce((max, tier) => Math.max(max, tier.masteredWords), 0);
   }
 
   totalWords(): number {
-    const total = this.tiers.reduce((sum, tier) => sum + tier.totalWords, 0);
+    const total = this.tiers.reduce((max, tier) => Math.max(max, tier.totalWords), 0);
     return total > 0 ? total : 50;
   }
 

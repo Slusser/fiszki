@@ -80,25 +80,23 @@ import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
                   Pytanie {{ answeredWords() + 1 }}/{{ totalWords() }}
                 </span>
                 <span class="quiz-card__time" [class.is-low]="isTimeLow()">
+                  <span class="quiz-card__time-icon" aria-hidden="true">⏱</span>
                   {{ store.timeLeftSeconds() }}s
                 </span>
               </div>
 
-              <div
-                class="quiz-card__timer"
-                role="progressbar"
-                [attr.aria-valuenow]="store.timerProgressPercent()"
-                aria-valuemin="0"
-                aria-valuemax="100"
-                aria-label="Pozostaly czas pytania"
-              >
-                <div
-                  class="quiz-card__timer-bar"
-                  [style.width.%]="store.timerProgressPercent()"
-                ></div>
-              </div>
-
               <h2>{{ question.prompt }}</h2>
+              <p class="quiz-card__attempts">
+                @if (store.currentWordRemainingCorrect() > 0) {
+                  Do opanowania tego slowka: jeszcze
+                  <strong>{{ store.currentWordRemainingCorrect() }}</strong>
+                  z
+                  <strong>{{ store.currentWordRequiredCorrect() }}</strong>
+                  poprawnych odpowiedzi.
+                } @else {
+                  To slowko jest juz opanowane.
+                }
+              </p>
 
               <div class="quiz-card__options">
                 @for (option of question.options; track option) {
@@ -239,14 +237,15 @@ import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 4.5rem;
+      gap: 0.35rem;
+      min-width: 5.1rem;
       border-radius: 999px;
-      background: var(--accent);
+      background: color-mix(in srgb, var(--accent) 75%, var(--card));
       color: var(--accent-foreground);
       font-family: var(--font-display);
       font-size: 0.88rem;
       font-weight: 900;
-      padding: 0.3rem 0.6rem;
+      padding: 0.28rem 0.62rem;
     }
 
     .quiz-card__time.is-low {
@@ -254,23 +253,28 @@ import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
       color: var(--destructive);
     }
 
-    .quiz-card__timer {
-      background: var(--muted);
-      border-radius: 999px;
-      height: 0.5rem;
-      overflow: hidden;
-    }
-
-    .quiz-card__timer-bar {
-      height: 100%;
-      background: var(--secondary);
-      transition: width 0.15s linear;
+    .quiz-card__time-icon {
+      font-size: 0.84rem;
+      line-height: 1;
     }
 
     .quiz-card h2 {
       margin: 0.15rem 0 0;
       font-size: clamp(1.45rem, 3.8vw, 2rem);
       line-height: 1.15;
+    }
+
+    .quiz-card__attempts {
+      margin: 0;
+      color: var(--muted-foreground);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .quiz-card__attempts strong {
+      color: var(--secondary);
+      font-family: var(--font-display);
+      font-size: 0.92rem;
     }
 
     .quiz-card__options {
