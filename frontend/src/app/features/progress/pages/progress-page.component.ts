@@ -1,5 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { ProgressService } from '../../../core/progress/progress.service';
+import { CatalogApiService } from '../../../core/catalog/catalog-api.service';
 import { ProgressCategoryOverview, TierName } from '../../../core/api/models';
 import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
 import { LoadingStateComponent } from '../../../shared/ui/loading-state.component';
@@ -326,15 +328,17 @@ import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
 })
 export class ProgressPageComponent {
   readonly progress = inject(ProgressService);
+  private readonly catalogApi = inject(CatalogApiService);
 
   readonly loading = signal(true);
   readonly errorMessage = signal<string | null>(null);
+  readonly unlockedCategoryIds = signal<Set<string>>(new Set());
   readonly categories = computed<ProgressCategoryOverview[]>(
     () => this.progress.overview()?.categories ?? [],
   );
   readonly visibleCategories = computed(() =>
     this.categories()
-      .filter((category) => this.isCategoryUnlocked(category))
+      .filter((category) => this.isCategoryUnlocked(category.categoryId))
       .sort((left, right) => {
         const rankDiff = this.categoryDisplayRank(left) - this.categoryDisplayRank(right);
         if (rankDiff !== 0) {
@@ -422,8 +426,8 @@ export class ProgressPageComponent {
     return Math.max(value, 2);
   }
 
-  private isCategoryUnlocked(category: ProgressCategoryOverview): boolean {
-    return category.tiers.some((tier) => tier.totalWords > 0);
+  private isCategoryUnlocked(categoryId: string): boolean {
+    return this.unlockedCategoryIds().has(categoryId);
   }
 
   private categoryTotalWords(category: ProgressCategoryOverview): number {
@@ -445,7 +449,17 @@ export class ProgressPageComponent {
     this.errorMessage.set(null);
 
     try {
-      await this.progress.refresh();
+      const [, categoriesResponse] = await Promise.all([
+        this.progress.refresh(),
+        firstValueFrom(this.catalogApi.getCategories()),
+      ]);
+      this.unlockedCategoryIds.set(
+        new Set(
+          categoriesResponse.categories
+            .filter((category) => category.isUnlocked)
+            .map((category) => category.id),
+        ),
+      );
     } catch {
       this.errorMessage.set('Nie udalo sie pobrac danych progresu.');
     } finally {
