@@ -16,10 +16,10 @@ import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
 
       @if (loading()) {
         <app-loading-state message="Ladowanie progresu..." />
-      } @else if (!categories().length) {
+      } @else if (!visibleCategories().length) {
         <app-empty-state
           title="Brak danych progresu"
-          description="Rozwiaz pierwsze quizy, aby zobaczyc postep."
+          description="Odblokuj pierwsza kategorie i rozwiaz quiz, aby zobaczyc postep."
         />
       } @else {
         <section class="progress-hero surface-card gradient-warm">
@@ -70,7 +70,7 @@ import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
         <section class="progress-list">
           <h3>Postep kategorii</h3>
           <ul>
-            @for (category of categories(); track category.categoryId) {
+            @for (category of visibleCategories(); track category.categoryId) {
               <li class="progress-item surface-card">
                 <div class="progress-item__head">
                   <div>
@@ -332,24 +332,28 @@ export class ProgressPageComponent {
   readonly categories = computed<ProgressCategoryOverview[]>(
     () => this.progress.overview()?.categories ?? [],
   );
+  readonly visibleCategories = computed(() =>
+    this.categories()
+      .filter((category) => this.isCategoryUnlocked(category))
+      .sort((left, right) => {
+        const rankDiff = this.categoryDisplayRank(left) - this.categoryDisplayRank(right);
+        if (rankDiff !== 0) {
+          return rankDiff;
+        }
+        return left.categoryName.localeCompare(right.categoryName, 'pl');
+      }),
+  );
   readonly masteredWords = computed(() =>
-    this.categories().reduce(
-      (sum, category) =>
-        sum + category.tiers.reduce((tierSum, tier) => tierSum + tier.masteredWords, 0),
-      0,
-    ),
+    this.visibleCategories().reduce((sum, category) => sum + this.categoryMasteredWords(category), 0),
   );
   readonly totalWords = computed(() =>
-    this.categories().reduce(
-      (sum, category) => sum + category.tiers.reduce((tierSum, tier) => tierSum + tier.totalWords, 0),
-      0,
-    ),
+    this.visibleCategories().reduce((sum, category) => sum + this.categoryTotalWords(category), 0),
   );
   readonly totalTierCount = computed(() =>
-    this.categories().reduce((sum, category) => sum + category.tiers.length, 0),
+    this.visibleCategories().reduce((sum, category) => sum + category.tiers.length, 0),
   );
   readonly completedTiers = computed(() =>
-    this.categories().reduce(
+    this.visibleCategories().reduce(
       (sum, category) => sum + category.tiers.filter((tier) => tier.completed).length,
       0,
     ),
@@ -376,7 +380,7 @@ export class ProgressPageComponent {
     return (['easy', 'hard', 'expert'] as TierName[]).map((tier) => {
       let mastered = 0;
       let total = 0;
-      for (const category of this.categories()) {
+      for (const category of this.visibleCategories()) {
         const found = category.tiers.find((entry) => entry.tier === tier);
         if (!found) {
           continue;
@@ -396,8 +400,8 @@ export class ProgressPageComponent {
   }
 
   categoryPercent(category: ProgressCategoryOverview): number {
-    const mastered = category.tiers.reduce((sum, tier) => sum + tier.masteredWords, 0);
-    const total = category.tiers.reduce((sum, tier) => sum + tier.totalWords, 0);
+    const mastered = this.categoryMasteredWords(category);
+    const total = this.categoryTotalWords(category);
     if (total <= 0) {
       return 0;
     }
@@ -416,6 +420,24 @@ export class ProgressPageComponent {
 
   max2(value: number): number {
     return Math.max(value, 2);
+  }
+
+  private isCategoryUnlocked(category: ProgressCategoryOverview): boolean {
+    return category.tiers.some((tier) => tier.totalWords > 0);
+  }
+
+  private categoryTotalWords(category: ProgressCategoryOverview): number {
+    return category.tiers.reduce((max, tier) => Math.max(max, tier.totalWords), 0);
+  }
+
+  private categoryMasteredWords(category: ProgressCategoryOverview): number {
+    return category.tiers.reduce((max, tier) => Math.max(max, tier.masteredWords), 0);
+  }
+
+  private categoryDisplayRank(category: ProgressCategoryOverview): number {
+    const completedTiers = category.tiers.filter((tier) => tier.completed).length;
+    const allCompleted = category.tiers.length > 0 && completedTiers >= category.tiers.length;
+    return allCompleted ? 1 : 0;
   }
 
   async reload(): Promise<void> {
