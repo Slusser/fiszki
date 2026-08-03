@@ -11,15 +11,19 @@ import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
   imports: [RouterLink, LoadingStateComponent, RetryStateComponent],
   template: `
     <section class="quiz-page">
-      <h2>Quiz</h2>
       @if (hasSelection()) {
-        <p class="quiz-page__meta">
-          Kategoria <strong>{{ categoryId() }}</strong> · tier <strong>{{ tier() }}</strong>
-        </p>
-
         @if (store.initializing()) {
           <app-loading-state message="Uruchamianie sesji quizu..." />
         } @else {
+          <div class="quiz-page__top">
+            <a routerLink="/katalog" class="quiz-page__back">Powrot do katalogu</a>
+            <p class="quiz-page__meta">
+              Kategoria <strong>{{ categoryId() }}</strong>
+              <span aria-hidden="true">·</span>
+              <strong>{{ tierLabel() }}</strong>
+            </p>
+          </div>
+
           @if (store.error(); as error) {
             <app-retry-state [message]="error" (retry)="retry()" />
           }
@@ -31,47 +35,78 @@ import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
           }
 
           @if (store.completed()) {
-            <article class="quiz-page__card">
-              <h3>Sesja zakonczona</h3>
+            <article class="quiz-summary surface-card">
+              <h2>Sesja zakonczona</h2>
               @if (store.progress(); as progress) {
-                <p>
-                  Odpowiedziano {{ progress.answeredWords }}/{{ progress.totalWords }} pytan,
-                  accuracy: {{ progress.sessionAccuracy }}%.
+                <p class="quiz-summary__stats">
+                  Odpowiedziano {{ progress.answeredWords }}/{{ progress.totalWords }} pytan ·
+                  skutecznosc {{ progress.sessionAccuracy }}%
                 </p>
               }
-              <button type="button" (click)="finishSession()" [disabled]="store.finishing()">
-                {{
-                  store.finishing() ? 'Finalizowanie...' : 'Finalizuj sesje i zobacz podsumowanie'
-                }}
-              </button>
-              <a routerLink="/katalog">Wroc do katalogu</a>
+              <div class="quiz-summary__actions">
+                <button type="button" (click)="finishSession()" [disabled]="store.finishing()">
+                  {{ store.finishing() ? 'Finalizowanie...' : 'Pokaz podsumowanie sesji' }}
+                </button>
+                <a routerLink="/katalog">Wroc do katalogu</a>
+              </div>
             </article>
           } @else if (store.loadingQuestion()) {
             <app-loading-state message="Ladowanie pytania..." />
           } @else if (store.question(); as question) {
-            <article class="quiz-page__card">
+            <article class="quiz-card surface-card">
               @if (store.progress(); as progress) {
-                <p class="quiz-page__progress">
-                  Postep: {{ progress.answeredWords }}/{{ progress.totalWords }} · pozostalo:
-                  {{ progress.remainingWords }} · accuracy: {{ progress.sessionAccuracy }}%
-                </p>
+                <div class="quiz-card__progress-head">
+                  <p>
+                    Postep: {{ progress.answeredWords }}/{{ progress.totalWords }} · pozostalo
+                    {{ progress.remainingWords }}
+                  </p>
+                  <p>Skutecznosc {{ progress.sessionAccuracy }}%</p>
+                </div>
               }
 
-              <div class="quiz-page__timer" aria-label="Pozostaly czas pytania">
+              <div
+                class="quiz-card__track"
+                role="progressbar"
+                [attr.aria-valuenow]="progressPercent()"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-label="Postep quizu"
+              >
+                <div class="quiz-card__track-fill gradient-ember" [style.width.%]="progressPercent()"></div>
+              </div>
+
+              <div class="quiz-card__timer-row">
+                <span class="quiz-card__index">
+                  Pytanie {{ answeredWords() + 1 }}/{{ totalWords() }}
+                </span>
+                <span class="quiz-card__time" [class.is-low]="isTimeLow()">
+                  {{ store.timeLeftSeconds() }}s
+                </span>
+              </div>
+
+              <div
+                class="quiz-card__timer"
+                role="progressbar"
+                [attr.aria-valuenow]="store.timerProgressPercent()"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-label="Pozostaly czas pytania"
+              >
                 <div
-                  class="quiz-page__timer-bar"
+                  class="quiz-card__timer-bar"
                   [style.width.%]="store.timerProgressPercent()"
                 ></div>
               </div>
-              <p class="quiz-page__time-left">Pozostaly czas: {{ store.timeLeftSeconds() }} s</p>
 
-              <h3>{{ question.prompt }}</h3>
-              <div class="quiz-page__options">
+              <h2>{{ question.prompt }}</h2>
+
+              <div class="quiz-card__options">
                 @for (option of question.options; track option) {
                   <button
                     type="button"
                     (click)="submitAnswer(option)"
                     [disabled]="store.answering() || store.loadingQuestion()"
+                    [class.is-pending]="store.answering()"
                   >
                     {{ option }}
                   </button>
@@ -80,11 +115,9 @@ import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
 
               @if (store.feedback(); as feedback) {
                 <p
-                  class="quiz-page__feedback"
+                  class="quiz-card__feedback"
                   [class.is-correct]="feedback.type === 'correct'"
-                  [class.is-incorrect]="
-                    feedback.type === 'incorrect' || feedback.type === 'timeout'
-                  "
+                  [class.is-incorrect]="feedback.type === 'incorrect' || feedback.type === 'timeout'"
                 >
                   {{ feedback.message }}
                 </p>
@@ -93,109 +126,277 @@ import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
           }
         }
       } @else {
-        <p>
+        <p class="quiz-page__empty-text">
           @if (store.initializing()) {
             Trwa sprawdzanie, czy mozna wznowic aktywna sesje...
           } @else {
             Wybierz kategorie i tier w katalogu, aby rozpoczac quiz.
           }
         </p>
-        <a routerLink="/katalog">Przejdz do katalogu</a>
+        <a routerLink="/katalog" class="quiz-page__back">Przejdz do katalogu</a>
       }
     </section>
   `,
   styles: `
     .quiz-page {
       display: grid;
-      gap: 1rem;
+      gap: 0.95rem;
     }
 
-    .quiz-page__meta,
-    .quiz-page__progress,
-    .quiz-page__time-left {
+    .quiz-page__top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+
+    .quiz-page__back {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.35rem;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--secondary);
+      text-decoration: none;
+      font-size: 0.86rem;
+      font-weight: 700;
+      padding: 0.45rem 0.75rem;
+    }
+
+    .quiz-page__back:hover {
+      background: var(--accent);
+      color: var(--accent-foreground);
+      border-color: transparent;
+    }
+
+    .quiz-page__meta {
       margin: 0;
+      color: var(--muted-foreground);
+      font-size: 0.9rem;
+      display: inline-flex;
+      gap: 0.35rem;
+      align-items: center;
     }
 
-    .quiz-page__card {
-      border: 1px solid #e2e8f0;
-      border-radius: 0.75rem;
-      padding: 1rem;
+    .quiz-page__info {
+      margin: 0;
+      border-radius: var(--radius-xl);
+      border: 1px solid color-mix(in srgb, var(--secondary) 20%, var(--border));
+      background: color-mix(in srgb, var(--accent) 35%, var(--card));
+      color: var(--secondary);
+      padding: 0.6rem 0.75rem;
+      font-size: 0.89rem;
+    }
+
+    .quiz-card {
       display: grid;
-      gap: 0.85rem;
+      gap: 0.9rem;
+      padding: 1rem;
     }
 
-    .quiz-page__timer {
-      background: #e2e8f0;
+    .quiz-card__progress-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .quiz-card__progress-head p {
+      margin: 0;
+      font-size: 0.83rem;
+      color: var(--muted-foreground);
+    }
+
+    .quiz-card__track {
+      height: 0.5rem;
+      border-radius: 999px;
+      overflow: hidden;
+      background: var(--muted);
+    }
+
+    .quiz-card__track-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.3s ease;
+    }
+
+    .quiz-card__timer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+    }
+
+    .quiz-card__index {
+      font-size: 0.85rem;
+      color: var(--muted-foreground);
+    }
+
+    .quiz-card__time {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 4.5rem;
+      border-radius: 999px;
+      background: var(--accent);
+      color: var(--accent-foreground);
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      font-weight: 900;
+      padding: 0.3rem 0.6rem;
+    }
+
+    .quiz-card__time.is-low {
+      background: color-mix(in srgb, var(--destructive) 15%, var(--card));
+      color: var(--destructive);
+    }
+
+    .quiz-card__timer {
+      background: var(--muted);
       border-radius: 999px;
       height: 0.5rem;
       overflow: hidden;
     }
 
-    .quiz-page__timer-bar {
+    .quiz-card__timer-bar {
       height: 100%;
-      background: #2563eb;
+      background: var(--secondary);
       transition: width 0.15s linear;
     }
 
-    .quiz-page__options {
+    .quiz-card h2 {
+      margin: 0.15rem 0 0;
+      font-size: clamp(1.45rem, 3.8vw, 2rem);
+      line-height: 1.15;
+    }
+
+    .quiz-card__options {
       display: grid;
-      gap: 0.5rem;
+      gap: 0.55rem;
     }
 
-    .quiz-page__options button {
+    .quiz-card__options button {
       text-align: left;
-      border: 1px solid #cbd5e1;
-      border-radius: 0.5rem;
-      padding: 0.6rem 0.7rem;
-      font: inherit;
-      background: #fff;
+      min-height: 2.9rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 0.62rem 0.75rem;
+      background: var(--card);
+      color: var(--foreground);
+      font-family: var(--font-display);
+      font-size: 0.98rem;
+      font-weight: 800;
       cursor: pointer;
+      transition: transform 0.13s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .quiz-page__options button:disabled {
-      opacity: 0.65;
+    .quiz-card__options button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      border-color: var(--primary);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .quiz-card__options button.is-pending {
+      cursor: not-allowed;
+      opacity: 0.85;
+    }
+
+    .quiz-card__options button:disabled {
+      opacity: 0.72;
       cursor: not-allowed;
     }
 
-    .quiz-page__feedback {
+    .quiz-card__feedback {
       margin: 0;
-      border-radius: 0.5rem;
-      padding: 0.6rem;
+      border-radius: var(--radius-xl);
+      padding: 0.62rem 0.72rem;
       border: 1px solid transparent;
+      font-size: 0.9rem;
+      font-weight: 700;
     }
 
-    .quiz-page__feedback.is-correct {
-      color: #166534;
-      background: #f0fdf4;
-      border-color: #bbf7d0;
+    .quiz-card__feedback.is-correct {
+      color: var(--success);
+      background: color-mix(in srgb, var(--success) 12%, var(--card));
+      border-color: color-mix(in srgb, var(--success) 34%, var(--border));
     }
 
-    .quiz-page__feedback.is-incorrect {
-      color: #991b1b;
-      background: #fef2f2;
-      border-color: #fecaca;
+    .quiz-card__feedback.is-incorrect {
+      color: var(--destructive);
+      background: color-mix(in srgb, var(--destructive) 10%, var(--card));
+      border-color: color-mix(in srgb, var(--destructive) 34%, var(--border));
     }
 
-    .quiz-page__error {
+    .quiz-summary {
+      display: grid;
+      gap: 0.75rem;
+      padding: 1rem;
+    }
+
+    .quiz-summary h2 {
       margin: 0;
-      border-radius: 0.5rem;
-      border: 1px solid #fecaca;
-      background: #fef2f2;
-      color: #991b1b;
-      padding: 0.6rem;
+      font-size: clamp(1.35rem, 3.5vw, 1.8rem);
+    }
+
+    .quiz-summary__stats {
+      margin: 0;
+      color: var(--muted-foreground);
+    }
+
+    .quiz-summary__actions {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      flex-wrap: wrap;
       gap: 0.75rem;
     }
 
-    .quiz-page__info {
+    .quiz-summary__actions button,
+    .quiz-summary__actions a {
+      min-height: 2.65rem;
+      border-radius: var(--radius-xl);
+      padding: 0.45rem 0.85rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .quiz-summary__actions button {
+      border: 1px solid transparent;
+      background: var(--secondary);
+      color: var(--secondary-foreground);
+      cursor: pointer;
+    }
+
+    .quiz-summary__actions button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .quiz-summary__actions a {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--secondary);
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .quiz-page__empty-text {
       margin: 0;
-      border-radius: 0.5rem;
-      border: 1px solid #bfdbfe;
-      background: #eff6ff;
-      color: #1e3a8a;
-      padding: 0.6rem;
+      color: var(--muted-foreground);
+    }
+
+    @media (max-width: 620px) {
+      .quiz-card,
+      .quiz-summary {
+        padding: 0.88rem;
+      }
+
+      .quiz-card__progress-head {
+        gap: 0.35rem;
+      }
     }
   `,
 })
@@ -212,6 +413,25 @@ export class QuizPageComponent implements OnDestroy {
   readonly hasSelection = computed(
     () => Boolean(this.categoryId()) && this.isTierName(this.tier()),
   );
+  readonly answeredWords = computed(() => this.store.progress()?.answeredWords ?? 0);
+  readonly totalWords = computed(() => Math.max(this.store.progress()?.totalWords ?? 0, 1));
+  readonly progressPercent = computed(() =>
+    Math.round((this.answeredWords() / this.totalWords()) * 100),
+  );
+  readonly isTimeLow = computed(() => this.store.timeLeftSeconds() <= 10);
+  readonly tierLabel = computed(() => {
+    const tier = this.tier();
+    if (tier === 'easy') {
+      return 'Easy';
+    }
+    if (tier === 'hard') {
+      return 'Hard';
+    }
+    if (tier === 'expert') {
+      return 'Expert';
+    }
+    return '-';
+  });
   private attemptedRestore = false;
 
   constructor() {

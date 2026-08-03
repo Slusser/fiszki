@@ -52,6 +52,6 @@ describe('ProgressPageComponent', () => {
     expect(progressServiceMock.refresh).toHaveBeenCalled();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Animals');
-    expect(compiled.textContent).toContain('Tier easy');
+    expect(compiled.textContent).toContain('Easy: 5/10');
   });
 });
