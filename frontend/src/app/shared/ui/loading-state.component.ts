@@ -2,15 +2,15 @@ import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-loading-state',
-  template: ` <p class="loading-state">{{ message }}</p> `,
+  template: ` <p class="loading-state surface-card" role="status">{{ message }}</p> `,
   styles: `
     .loading-state {
       margin: 0;
-      border: 1px dashed #cbd5e1;
-      border-radius: 0.5rem;
-      padding: 0.65rem;
-      color: #475569;
-      background: #f8fafc;
+      border-style: dashed;
+      border-radius: var(--radius-xl);
+      padding: 0.7rem 0.8rem;
+      color: var(--muted-foreground);
+      font-size: 0.9rem;
     }
   `,
 })

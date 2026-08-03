@@ -1,1 +1,171 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  --font-display: 'Urbanist', 'Epilogue', 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-sans: 'Epilogue', 'Segoe UI', Roboto, Arial, sans-serif;
+
+  --radius: 1rem;
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 3px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 6px);
+  --radius-2xl: calc(var(--radius) + 12px);
+
+  --background: #f9f4ed;
+  --foreground: #57362d;
+  --card: #fffcf8;
+  --card-foreground: #57362d;
+  --popover: #fffcf8;
+  --popover-foreground: #57362d;
+
+  --primary: #e24e1b;
+  --primary-foreground: #fff9f2;
+  --secondary: #654236;
+  --secondary-foreground: #fffbf5;
+  --copper: #db995a;
+  --copper-foreground: #57362d;
+  --sage: #d6d4a0;
+  --sage-foreground: #4d4a2d;
+
+  --muted: #f2e8dc;
+  --muted-foreground: #8a685b;
+  --accent: #f0dcc0;
+  --accent-foreground: #5a3d30;
+
+  --destructive: #cb3f37;
+  --destructive-foreground: #fff8f6;
+  --success: #3f8a65;
+  --success-foreground: #f8fff9;
+  --warning: #d39a45;
+  --warning-foreground: #4b2f14;
+
+  --border: #e7d8c3;
+  --input: #e7d8c3;
+  --ring: #e24e1b;
+
+  --gradient-ember: linear-gradient(135deg, #e24e1b, #eb8b38);
+  --gradient-warm: linear-gradient(160deg, #fffbf5, #f5e6d0);
+  --shadow-soft:
+    0 2px 4px -2px rgba(80, 57, 50, 0.1),
+    0 12px 28px -14px rgba(80, 57, 50, 0.28);
+  --shadow-lift:
+    0 4px 8px -4px rgba(80, 57, 50, 0.14),
+    0 24px 44px -22px rgba(226, 78, 27, 0.42);
+}
+
+.theme-dark {
+  --background: #372c27;
+  --foreground: #f5ebe0;
+  --card: #473832;
+  --card-foreground: #f5ebe0;
+  --popover: #473832;
+  --popover-foreground: #f5ebe0;
+
+  --primary: #f16a35;
+  --primary-foreground: #2f2622;
+  --secondary: #5a4338;
+  --secondary-foreground: #f5ebe0;
+  --copper: #e2a56c;
+  --copper-foreground: #2f2622;
+  --sage: #d0cc91;
+  --sage-foreground: #2f2622;
+
+  --muted: #53443d;
+  --muted-foreground: #d3c1ae;
+  --accent: #644f43;
+  --accent-foreground: #f5ebe0;
+
+  --destructive: #e05a53;
+  --destructive-foreground: #fff9f7;
+  --success: #6cb792;
+  --success-foreground: #1f2721;
+  --warning: #e6ad57;
+  --warning-foreground: #2f2622;
+
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.16);
+  --ring: #f16a35;
+
+  --gradient-warm: linear-gradient(160deg, #473832, #3b302b);
+  --shadow-soft: 0 12px 28px -14px rgba(0, 0, 0, 0.6);
+  --shadow-lift: 0 24px 44px -22px rgba(0, 0, 0, 0.7);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.page-container {
+  width: min(100% - 2.5rem, 72rem);
+  margin-inline: auto;
+}
+
+.page-section {
+  margin-block: 2rem;
+}
+
+.surface-card {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-soft);
+}
+
+.gradient-ember {
+  background-image: var(--gradient-ember);
+}
+
+.gradient-warm {
+  background-image: var(--gradient-warm);
+}
+
+.shadow-lift {
+  box-shadow: var(--shadow-lift);
+}
+
+.grain-dots {
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
