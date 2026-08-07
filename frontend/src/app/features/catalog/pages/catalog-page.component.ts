@@ -189,20 +189,28 @@ type FilterId = (typeof FILTERS)[number]['id'];
       border-radius: var(--radius-xl);
       background: var(--card);
       text-align: center;
-      padding: 0.65rem;
+      padding: 0.7rem 0.8rem;
+      min-height: 5rem;
+      display: grid;
+      align-content: space-between;
+      justify-items: center;
     }
 
     .catalog-hero__stats dt {
       color: var(--muted-foreground);
       font-size: 0.72rem;
       margin: 0;
+      min-height: 2em;
+      display: grid;
+      align-items: center;
     }
 
     .catalog-hero__stats dd {
-      margin: 0.28rem 0 0;
+      margin: 0.35rem 0 0;
       font-family: var(--font-display);
       font-size: 1.16rem;
       font-weight: 900;
+      line-height: 1;
     }
 
     .catalog-alert {
@@ -356,7 +364,7 @@ type FilterId = (typeof FILTERS)[number]['id'];
       }
 
       .catalog-hero__stats {
-        width: 19.5rem;
+        width: 23.5rem;
       }
 
       .catalog-toolbar {

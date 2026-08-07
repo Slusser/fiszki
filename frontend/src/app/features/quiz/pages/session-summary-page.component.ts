@@ -1,6 +1,8 @@
-import { Component, computed, effect, inject, untracked } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { firstValueFrom } from 'rxjs';
+import { CatalogApiService } from '../../../core/catalog/catalog-api.service';
 import { QuizSessionStore } from '../../../core/quiz/quiz-session.store';
 import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
 import { LoadingStateComponent } from '../../../shared/ui/loading-state.component';
@@ -19,7 +21,7 @@ import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
         <section class="summary-hero surface-card gradient-warm">
           <div>
             <p class="summary-hero__badge">Podsumowanie sesji</p>
-            <h2>{{ summary.categoryId }} · {{ tierLabel(summary.tier) }}</h2>
+            <h2>{{ categoryLabel(summary.categoryId) }} · {{ tierLabel(summary.tier) }}</h2>
             <p>Session ID: <code>{{ summary.sessionId }}</code></p>
           </div>
           <dl class="summary-hero__stats">
@@ -44,8 +46,7 @@ import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
             <li>
               <span>Status</span>
               <strong>
-                {{ summary.status }}
-                {{ summary.idempotent ? '(idempotent)' : '' }}
+                {{ statusLabel(summary.status, summary.idempotent) }}
               </strong>
             </li>
             <li>
@@ -237,10 +238,12 @@ import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
 })
 export class SessionSummaryPageComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly catalogApi = inject(CatalogApiService);
   readonly store = inject(QuizSessionStore);
   private readonly params = toSignal(this.route.paramMap, {
     initialValue: this.route.snapshot.paramMap,
   });
+  private readonly categoryNamesById = signal<Record<string, string>>({});
 
   readonly sessionId = computed(() => this.params().get('sessionId'));
 
@@ -250,6 +253,8 @@ export class SessionSummaryPageComponent {
       if (!sessionId) {
         return;
       }
+
+      void this.ensureCategoryNamesLoaded();
 
       // Prevent effect from tracking store signals read inside loadSummaryForSession().
       untracked(() => {
@@ -278,5 +283,46 @@ export class SessionSummaryPageComponent {
       return 'Expert';
     }
     return tier;
+  }
+
+  categoryLabel(categoryId: string): string {
+    return this.categoryNamesById()[categoryId] ?? categoryId;
+  }
+
+  statusLabel(status: string, idempotent: boolean): string {
+    const knownStatusLabels: Record<string, string> = {
+      finished: 'Zakonczona',
+      in_progress: 'W trakcie',
+      abandoned: 'Porzucona',
+    };
+    const baseLabel = knownStatusLabels[status] ?? this.humanizeTag(status);
+    return idempotent ? `${baseLabel} (ponowne wywolanie)` : baseLabel;
+  }
+
+  private async ensureCategoryNamesLoaded(): Promise<void> {
+    if (Object.keys(this.categoryNamesById()).length > 0) {
+      return;
+    }
+
+    try {
+      const { categories } = await firstValueFrom(this.catalogApi.getCategories());
+      const namesById = Object.fromEntries(categories.map((category) => [category.id, category.name]));
+      this.categoryNamesById.set(namesById);
+    } catch {
+      // Keep category ID fallback when catalog is unavailable.
+    }
+  }
+
+  private humanizeTag(value: string): string {
+    const normalized = value
+      .trim()
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .toLowerCase();
+    if (!normalized) {
+      return 'Nieznany status';
+    }
+
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
   }
 }
