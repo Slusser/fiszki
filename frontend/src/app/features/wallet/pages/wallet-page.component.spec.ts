@@ -69,7 +69,7 @@ describe('WalletPageComponent', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('150 pkt');
-    expect(compiled.textContent).toContain('session_finish_reward_first');
+    expect(compiled.textContent).toContain('Session finish reward first');
     expect(compiled.textContent).toContain('Travel');
   });
 });

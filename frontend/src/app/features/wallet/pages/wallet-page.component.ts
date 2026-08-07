@@ -55,7 +55,7 @@ import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
                 @for (entry of ledgerEntries(); track entry.id) {
                   <li class="wallet-ledger__item" [class.is-positive]="entry.delta > 0">
                     <div class="wallet-ledger__main">
-                      <p>{{ entry.reason }}</p>
+                      <p>{{ formatReason(entry.reason) }}</p>
                       <span>{{ formatDate(entry.createdAt) }}</span>
                     </div>
                     <strong>{{ entry.delta >= 0 ? '+' : '' }}{{ formatPoints(entry.delta) }} pkt</strong>
@@ -353,6 +353,30 @@ export class WalletPageComponent {
 
   canAfford(cost: number): boolean {
     return (this.pointsBalance() ?? 0) >= cost;
+  }
+
+  formatReason(reason: string): string {
+    const knownReasonLabels: Record<string, string> = {
+      tier_completed: 'Ukonczenie poziomu',
+      tier_completed_repeat: 'Powtorka ukonczonego poziomu',
+      category_unlock: 'Odblokowanie kategorii',
+    };
+
+    const knownLabel = knownReasonLabels[reason];
+    if (knownLabel) {
+      return knownLabel;
+    }
+
+    const normalized = reason
+      .trim()
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .toLowerCase();
+    if (!normalized) {
+      return 'Nieznana operacja';
+    }
+
+    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
   }
 
   async reload(): Promise<void> {

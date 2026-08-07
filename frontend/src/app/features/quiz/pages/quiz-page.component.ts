@@ -1,7 +1,9 @@
-import { Component, OnDestroy, computed, effect, inject } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { firstValueFrom } from 'rxjs';
 import { TierName } from '../../../core/api/models';
+import { CatalogApiService } from '../../../core/catalog/catalog-api.service';
 import { QuizSessionStore } from '../../../core/quiz/quiz-session.store';
 import { LoadingStateComponent } from '../../../shared/ui/loading-state.component';
 import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
@@ -18,7 +20,7 @@ import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
           <div class="quiz-page__top">
             <a routerLink="/katalog" class="quiz-page__back">Powrot do katalogu</a>
             <p class="quiz-page__meta">
-              Kategoria <strong>{{ categoryId() }}</strong>
+              Kategoria <strong>{{ categoryLabel() }}</strong>
               <span aria-hidden="true">·</span>
               <strong>{{ tierLabel() }}</strong>
             </p>
@@ -407,12 +409,22 @@ import { RetryStateComponent } from '../../../shared/ui/retry-state.component';
 export class QuizPageComponent implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly catalogApi = inject(CatalogApiService);
   readonly store = inject(QuizSessionStore);
   private readonly params = toSignal(this.route.paramMap, {
     initialValue: this.route.snapshot.paramMap,
   });
+  private readonly categoryNamesById = signal<Record<string, string>>({});
 
   readonly categoryId = computed(() => this.params().get('categoryId'));
+  readonly categoryLabel = computed(() => {
+    const categoryId = this.categoryId();
+    if (!categoryId) {
+      return '-';
+    }
+
+    return this.categoryNamesById()[categoryId] ?? categoryId;
+  });
   readonly tier = computed(() => this.params().get('tier') as TierName | null);
   readonly hasSelection = computed(
     () => Boolean(this.categoryId()) && this.isTierName(this.tier()),
@@ -453,6 +465,7 @@ export class QuizPageComponent implements OnDestroy {
       }
 
       this.attemptedRestore = true;
+      void this.ensureCategoryName(categoryId);
       void this.store.ensureSession(categoryId, tier);
     });
   }
@@ -492,6 +505,20 @@ export class QuizPageComponent implements OnDestroy {
 
   private isTierName(value: string | null): value is TierName {
     return value === 'easy' || value === 'hard' || value === 'expert';
+  }
+
+  private async ensureCategoryName(categoryId: string): Promise<void> {
+    if (this.categoryNamesById()[categoryId]) {
+      return;
+    }
+
+    try {
+      const { categories } = await firstValueFrom(this.catalogApi.getCategories());
+      const namesById = Object.fromEntries(categories.map((category) => [category.id, category.name]));
+      this.categoryNamesById.set(namesById);
+    } catch {
+      // Keep ID fallback in UI when categories can't be loaded.
+    }
   }
 
   ngOnDestroy(): void {
